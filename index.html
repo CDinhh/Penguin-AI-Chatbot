@@ -547,8 +547,9 @@
 
 		const isProd = window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost';
 		const CHAT_API_URL = isProd ? '/api/chat' : 'http://127.0.0.1:8001/chat';
-		const CHAT_HEALTH_URL = isProd ? '/api/chat/health' : 'http://127.0.0.1:8001/health';
+		const CHAT_HEALTH_URL = CHAT_API_URL;
 		const TTS_API_URL = isProd ? '/api/tts' : 'http://127.0.0.1:8002/tts';
+		const TTS_HEALTH_URL = TTS_API_URL;
 		const TTS_VOICE = '8VXsCLxU7Pn55ADXQc6sAb';
 		const VRM_MODEL_URL = './VRM/penguin.vrm';
 		const VRMA_ANIMATION_URLS = [
@@ -1030,7 +1031,7 @@
 			try {
 				const [chatResponse, ttsResponse] = await Promise.all([
 					fetch(CHAT_HEALTH_URL),
-					fetch('http://127.0.0.1:8002/health'),
+					fetch(TTS_HEALTH_URL),
 				]);
 				const payload = await chatResponse.json();
 				const ttsPayload = await ttsResponse.json();

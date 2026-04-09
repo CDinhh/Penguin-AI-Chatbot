@@ -140,7 +140,7 @@ const synthesizeWithVclip = async ({ text, speed }) => {
   return payload;
 };
 
-app.get(['/health', '/api/tts/health'], (_req, res) => {
+app.get(['/health', '/api/tts/health', '/api/tts', '/'], (_req, res) => {
   res.status(200).json({
     ok: true,
     service: 'tts',
@@ -149,7 +149,7 @@ app.get(['/health', '/api/tts/health'], (_req, res) => {
   });
 });
 
-app.post(['/tts', '/api/tts'], async (req, res) => {
+app.post(['/tts', '/api/tts', '/'], async (req, res) => {
   const text = String(req.body?.text || '').trim();
   const speed = Number(req.body?.speed || 1);
 

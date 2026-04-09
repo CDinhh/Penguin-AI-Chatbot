@@ -202,7 +202,8 @@ class ChatbotHandler(BaseHTTPRequestHandler):
 		self._send_json(200, {"ok": True})
 
 	def do_GET(self) -> None:
-		if self.path == "/health" or self.path == "/api/chat/health":
+		# Vercel may pass /api/chat or just /
+		if self.path == "/health" or self.path == "/api/chat/health" or self.path == "/api/chat" or self.path == "/":
 			self._send_json(
 				200,
 				{
@@ -213,11 +214,11 @@ class ChatbotHandler(BaseHTTPRequestHandler):
 			)
 			return
 
-		self._send_json(404, {"ok": False, "error": "Not found"})
+		self._send_json(404, {"ok": False, "error": f"Not found GET {self.path}"})
 
 	def do_POST(self) -> None:
-		if self.path != "/chat" and self.path != "/api/chat":
-			self._send_json(404, {"ok": False, "error": f"Not found path={self.path}"})
+		if self.path != "/chat" and self.path != "/api/chat" and self.path != "/":
+			self._send_json(404, {"ok": False, "error": f"Not found POST path={self.path}"})
 			return
 
 		content_length = int(self.headers.get("Content-Length", "0"))
