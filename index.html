@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<title>VRM Chat Companion</title>
+	<meta name="viewport"
+		content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<style>
+		body {
+			margin: 0;
+			font-family: 'Inter', '-apple-system', 'Segoe UI', sans-serif;
+			overflow: hidden;
+			background: #f8fafc;
+		}
+
+		canvas {
+			display: block;
+			width: 100vw;
+			height: 100vh;
+		}
+
+		.controls,
+		.chat-shell {
+			position: absolute;
+			bottom: 20px;
+			padding: 18px;
+			display: flex;
+			flex-direction: column;
+			gap: 14px;
+			color: #1f2937;
+			border: 1px solid rgba(255, 255, 255, 0.4);
+			border-radius: 24px;
+			background: rgba(255, 255, 255, 0.7);
+			backdrop-filter: blur(12px);
+			-webkit-backdrop-filter: blur(12px);
+			box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+		}
+
+		.controls {
+			left: 20px;
+			width: min(420px, calc(100vw - 40px));
+			z-index: 100;
+		}
+
+		.chat-shell {
+			right: 20px;
+			width: min(420px, calc(100vw - 40px));
+			height: min(580px, calc(100vh - 40px));
+			z-index: 110;
+		}
+
+		.panel-header {
+			display: flex;
+			flex-direction: column;
+			align-items: flex-start;
+			gap: 6px;
+		}
+
+		.eyebrow {
+			font-size: 11px;
+			font-weight: 700;
+			letter-spacing: 0.16em;
+			text-transform: uppercase;
+			color: #3b82f6;
+		}
+
+		.panel-title {
+			font-size: 24px;
+			font-weight: 800;
+			letter-spacing: 0.01em;
+			color: #111827;
+		}
+
+		.panel-subtitle {
+			font-size: 13px;
+			line-height: 1.5;
+			color: #6b7280;
+		}
+
+		.section {
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+		}
+
+		.section label {
+			font-size: 12px;
+			font-weight: 700;
+			letter-spacing: 0.08em;
+			text-transform: uppercase;
+			color: #6b7280;
+		}
+
+		.model-chip {
+			display: inline-flex;
+			align-self: flex-start;
+			align-items: center;
+			padding: 8px 12px;
+			border-radius: 999px;
+			background: #eff6ff;
+			border: 1px solid #dbeafe;
+			font-size: 13px;
+			font-weight: 600;
+			color: #2563eb;
+		}
+
+		#vrmaButtons {
+			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 12px;
+		}
+
+		#vrmaButtons label {
+			grid-column: 1 / -1;
+		}
+
+		.vrma-btn {
+			width: 100%;
+			padding: 10px 12px;
+			border: 1px solid rgba(59, 130, 246, 0.5);
+			border-radius: 12px;
+			background: transparent;
+			color: #3b82f6;
+			cursor: pointer;
+			font-family: inherit;
+			font-size: 13px;
+			font-weight: 500;
+			transition: all 0.2s ease;
+			box-shadow: none;
+		}
+
+		.vrma-btn:hover:not(:disabled) {
+			background: rgba(59, 130, 246, 0.1);
+			transform: translateY(-1px);
+		}
+
+		.vrma-btn:active:not(:disabled) {
+			transform: translateY(1px);
+		}
+
+		.vrma-btn.active:not(:disabled) {
+			background: #1E40AF;
+			color: #ffffff;
+			border-color: #1E40AF;
+			box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+		}
+
+		.vrma-btn:disabled {
+			background: transparent;
+			border-color: #e5e7eb;
+			color: #9ca3af;
+			cursor: not-allowed;
+		}
+
+		.status {
+			font-size: 13px;
+			line-height: 1.5;
+			color: #6b7280;
+			padding-top: 6px;
+			border-top: 1px solid rgba(0, 0, 0, 0.06);
+		}
+
+		.assistant-state {
+			font-size: 13px;
+			line-height: 1.5;
+			color: #1e3a8a;
+			padding: 10px 12px;
+			border-radius: 14px;
+			background: #eff6ff;
+			border: 1px solid #bfdbfe;
+		}
+
+		.chat-log {
+			flex: 1;
+			overflow-y: auto;
+			display: flex;
+			flex-direction: column;
+			gap: 10px;
+			padding-right: 6px;
+		}
+
+		.chat-row {
+			display: flex;
+		}
+
+		.chat-row.user {
+			justify-content: flex-end;
+		}
+
+		.chat-bubble {
+			max-width: 85%;
+			padding: 12px 16px;
+			border-radius: 20px;
+			font-size: 14px;
+			line-height: 1.5;
+			white-space: pre-wrap;
+			box-shadow: 0 2px 12px rgba(31, 38, 135, 0.05);
+		}
+
+		.chat-row.user .chat-bubble {
+			background: #ffffff;
+			color: #1E40AF;
+			border: 1px solid rgba(31, 38, 135, 0.1);
+			border-bottom-right-radius: 4px;
+		}
+
+		.chat-row.assistant .chat-bubble {
+			background: #1E40AF;
+			color: #ffffff;
+			border: none;
+			border-bottom-left-radius: 4px;
+		}
+
+		.usage-badge {
+			display: block;
+			margin-top: 8px;
+			font-size: 11px;
+			color: rgba(255, 255, 255, 0.7);
+			font-weight: 500;
+			letter-spacing: 0.02em;
+		}
+
+		.chat-row.thinking .chat-bubble {
+			background: #eff6ff;
+			color: #1E40AF;
+			border: 1px solid rgba(31, 38, 135, 0.1);
+			border-bottom-left-radius: 4px;
+		}
+
+		.thinking-dots {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+		}
+
+		.thinking-dots span {
+			width: 7px;
+			height: 7px;
+			border-radius: 999px;
+			background: currentColor;
+			opacity: 0.35;
+			animation: pulseDot 1s infinite ease-in-out;
+		}
+
+		.thinking-dots span:nth-child(2) {
+			animation-delay: 0.15s;
+		}
+
+		.thinking-dots span:nth-child(3) {
+			animation-delay: 0.3s;
+		}
+
+		.chat-composer {
+			display: flex;
+			position: relative;
+			align-items: center;
+			margin-top: 8px;
+		}
+
+		.chat-composer input {
+			flex: 1;
+			min-width: 0;
+			padding: 12px 48px 12px 20px;
+			border-radius: 999px;
+			border: 1px solid rgba(31, 38, 135, 0.15);
+			background: #ffffff;
+			color: #1f2937;
+			font: inherit;
+			font-size: 14px;
+			outline: none;
+			box-shadow: 0 2px 6px rgba(31, 38, 135, 0.05);
+			transition: all 0.2s ease;
+		}
+
+		.chat-composer input:focus {
+			box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.6);
+			border-color: #3b82f6;
+		}
+
+		.chat-composer input::placeholder {
+			color: #9ca3af;
+		}
+
+		.chat-composer button {
+			position: absolute;
+			right: 6px;
+			width: 36px;
+			height: 36px;
+			padding: 0;
+			border-radius: 50%;
+			background: #1E40AF;
+			color: #ffffff;
+			border: none;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			box-shadow: 0 2px 8px rgba(30, 64, 175, 0.3);
+			transition: all 0.2s ease;
+		}
+
+		.chat-composer button:hover {
+			transform: scale(1.05);
+			box-shadow: 0 4px 12px rgba(30, 64, 175, 0.4);
+		}
+
+		.chat-composer button:active {
+			transform: scale(0.95);
+		}
+
+		.chat-composer button svg {
+			width: 16px;
+			height: 16px;
+			fill: currentColor;
+		}
+
+		.speech-bubble {
+			position: absolute;
+			top: 40px;
+			left: 50%;
+			transform: translateX(-50%);
+			max-width: min(520px, calc(100vw - 40px));
+			padding: 14px 18px;
+			border-radius: 24px;
+			background: rgba(255, 255, 255, 0.94);
+			color: #1f2937;
+			font-size: 15px;
+			line-height: 1.5;
+			text-align: center;
+			box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+			opacity: 0;
+			transition: opacity 0.24s ease, transform 0.24s ease;
+			pointer-events: none;
+			display: block;
+			z-index: 120;
+		}
+
+		.speech-bubble.visible {
+			opacity: 1;
+			transform: translateX(-50%) translateY(0);
+		}
+
+		.speech-bubble.thinking {
+			background: #eff6ff;
+			color: #3b82f6;
+			border: 1px solid #bfdbfe;
+			box-shadow: 0 12px 32px rgba(59, 130, 246, 0.15);
+		}
+
+		.model-thinking {
+			display: inline-flex;
+			align-items: center;
+			gap: 10px;
+		}
+
+		.model-thinking-label {
+			font-size: 15px;
+			font-weight: 600;
+			letter-spacing: 0.01em;
+		}
+
+		@keyframes pulseDot {
+
+			0%,
+			80%,
+			100% {
+				transform: scale(0.75);
+				opacity: 0.28;
+			}
+
+			40% {
+				transform: scale(1);
+				opacity: 1;
+			}
+		}
+
+		#loadingOverlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: #f8fafc;
+			z-index: 9999;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			transition: opacity 0.6s ease, visibility 0.6s;
+			color: #1e40af;
+		}
+
+		.loader-spinner {
+			width: 50px;
+			height: 50px;
+			border: 4px solid rgba(30, 64, 175, 0.1);
+			border-top-color: #1e40af;
+			border-radius: 50%;
+			animation: spinLoad 1s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+			margin-bottom: 24px;
+		}
+
+		.loader-text {
+			font-size: 16px;
+			font-weight: 700;
+			letter-spacing: 0.05em;
+		}
+
+		.loader-subtext {
+			margin-top: 8px;
+			font-size: 13px;
+			color: #6b7280;
+		}
+
+		@keyframes spinLoad {
+			0% { transform: rotate(0deg); }
+			100% { transform: rotate(360deg); }
+		}
+
+		@media (max-width: 640px) {
+			.controls {
+				left: 12px;
+				bottom: 12px;
+				width: min(100vw - 24px, 420px);
+				padding: 14px;
+				border-radius: 18px;
+			}
+
+			.chat-shell {
+				left: 12px;
+				right: 12px;
+				bottom: 256px;
+				width: auto;
+				height: min(42vh, 440px);
+				padding: 14px;
+				border-radius: 18px;
+			}
+
+			#vrmaButtons {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+		}
+	</style>
+</head>
+
+<body>
+	<div id="loadingOverlay">
+		<div class="loader-spinner"></div>
+		<div class="loader-text">ĐANG CHUẨN BỊ DỮ LIỆU...</div>
+		<div class="loader-subtext" id="loaderSubtext">Tải tài nguyên 3D và kết nối máy chủ, đợi xíu nha!</div>
+	</div>
+
+	<div class="speech-bubble" id="speechBubble"></div>
+
+	<div class="controls">
+		<div class="panel-header">
+			<span class="eyebrow">Tương Tác</span>
+			<div class="panel-title">Biểu Cảm & Hành Động</div>
+			<div class="panel-subtitle">Chọn một hành động để Tổng tài Cánh Cụt thể hiện ngay nhé.</div>
+		</div>
+
+		<div class="section">
+			<label>VRM Model</label>
+			<span class="model-chip">penguin.vrm</span>
+		</div>
+
+		<div class="section" id="vrmaButtons">
+			<label>VRMA Animations</label>
+			<button class="vrma-btn" disabled>Angry</button>
+			<button class="vrma-btn" disabled>Blush</button>
+			<button class="vrma-btn" disabled>Clapping</button>
+			<button class="vrma-btn" disabled>Goodbye</button>
+			<button class="vrma-btn" disabled>Jump</button>
+			<button class="vrma-btn" disabled>LookAround</button>
+			<button class="vrma-btn" disabled>Relax</button>
+			<button class="vrma-btn" disabled>Sad</button>
+			<button class="vrma-btn" disabled>Sleepy</button>
+			<button class="vrma-btn" disabled>Surprised</button>
+			<button class="vrma-btn" disabled>Thinking</button>
+		</div>
+
+		<div class="status" id="status">Đang chuẩn bị...</div>
+	</div>
+
+	<div class="chat-shell">
+		<div class="panel-header">
+			<span class="eyebrow">Trò Chuyện</span>
+			<div class="panel-title" style="display: flex; align-items: center; gap: 8px;">
+				<span style="font-weight: 800; color: #1E40AF;">Tổng tài Cánh Cụt</span>
+				<span
+					style="display: inline-block; width: 10px; height: 10px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);"></span>
+			</div>
+			<div class="panel-subtitle" style="display: flex; flex-direction: column; gap: 8px;">
+				<span>Sếp luôn ở đây lắng nghe và hỗ trợ em giải quyết mọi vấn đề.</span>
+				<div
+					style="display: grid; grid-template-columns: max-content 1fr; gap: 8px; align-items: center; width: 100%; margin-top: 2px;">
+					<span style="font-size: 11px; color: #9ca3af; white-space: nowrap;">Mô hình:</span>
+					<select id="modelSelect"
+						style="background:#ffffff; color:#1f2937; border: 1px solid #e5e7eb; padding:4px 8px; border-radius:4px; font-size:12px; outline:none; cursor: pointer; width: 100%;">
+						<option value="gemma-3-27b-it">Gemma 3 27B (lỏ nhưng dùng được nhiều)</option>
+						<option value="gemini-2.5-flash">Gemini 2.5 Flash (dùng vài cái hết token)</option>
+					</select>
+					<span style="font-size: 11px; color: #9ca3af; white-space: nowrap;">Google AI Studio Key:</span>
+					<input id="customApiKeyInput" type="password" placeholder="nếu key default hết token"
+						style="background:#ffffff; color:#1f2937; border: 1px solid #e5e7eb; padding:4px 8px; border-radius:4px; font-size:12px; outline:none; width: 100%; box-sizing: border-box; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);" />
+				</div>
+			</div>
+		</div>
+
+		<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+			<div class="assistant-state" id="assistantState" style="flex: 1;">Đang đánh thức Tổng tài Cánh Cụt...</div>
+			<button id="manualReloadBtn"
+				style="background: #eff6ff; border: 1px solid #bfdbfe; color: #3b82f6; cursor: pointer; font-size: 16px; width: 38px; height: 38px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s;"
+				title="Tự gọi lại Sếp" onmouseover="this.style.background='#dbeafe'"
+				onmouseout="this.style.background='#eff6ff'">&#x21bb;</button>
+		</div>
+		<div class="chat-log" id="chatLog"></div>
+
+		<form class="chat-composer" id="chatForm">
+			<input id="chatInput" type="text" placeholder="Nhập tin nhắn..." autocomplete="off" maxlength="1000" />
+			<button id="sendButton" type="submit" aria-label="Gửi">
+				<svg viewBox="0 0 24 24">
+					<path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke="currentColor" stroke-width="2"
+						stroke-linecap="round" stroke-linejoin="round" fill="none" />
+				</svg>
+			</button>
+		</form>
+	</div>
+
+	<script type="module">
+		import * as THREE from 'three';
+		import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+		import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+		import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+		import { VRMLoaderPlugin, VRMUtils, VRMExpressionPresetName } from '@pixiv/three-vrm';
+		import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from '@pixiv/three-vrm-animation';
+
+		const vrmaButtons = document.querySelectorAll('.vrma-btn');
+		const statusDiv = document.getElementById('status');
+		const assistantState = document.getElementById('assistantState');
+		const speechBubble = document.getElementById('speechBubble');
+		const chatLog = document.getElementById('chatLog');
+		const chatForm = document.getElementById('chatForm');
+		const chatInput = document.getElementById('chatInput');
+		const sendButton = document.getElementById('sendButton');
+
+		const isProd = window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost';
+		const CHAT_API_URL = isProd ? '/api/chat' : 'http://127.0.0.1:8001/chat';
+		const CHAT_HEALTH_URL = isProd ? '/api/chat/health' : 'http://127.0.0.1:8001/health';
+		const TTS_API_URL = isProd ? '/api/tts' : 'http://127.0.0.1:8002/tts';
+		const TTS_VOICE = '8VXsCLxU7Pn55ADXQc6sAb';
+		const VRM_MODEL_URL = './VRM/penguin.vrm';
+		const VRMA_ANIMATION_URLS = [
+			'./VRMA/Angry.vrma',
+			'./VRMA/Blush.vrma',
+			'./VRMA/Clapping.vrma',
+			'./VRMA/Goodbye.vrma',
+			'./VRMA/Jump.vrma',
+			'./VRMA/LookAround.vrma',
+			'./VRMA/Relax.vrma',
+			'./VRMA/Sad.vrma',
+			'./VRMA/Sleepy.vrma',
+			'./VRMA/Surprised.vrma',
+			'./VRMA/Thinking.vrma',
+		];
+
+		const BACKGROUND_PRESET = {
+			label: 'Passendorf Snow',
+			url: './hdr/passendorf_snow_4k.hdr',
+		};
+
+		const renderer = new THREE.WebGLRenderer({ antialias: true });
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		renderer.setPixelRatio(window.devicePixelRatio);
+		renderer.outputEncoding = THREE.sRGBEncoding;
+		renderer.toneMapping = THREE.ACESFilmicToneMapping;
+		renderer.toneMappingExposure = 1.0;
+		document.body.appendChild(renderer.domElement);
+
+		const camera = new THREE.PerspectiveCamera(30.0, window.innerWidth / window.innerHeight, 0.1, 20.0);
+		camera.position.set(0.0, 1.0, 5.0);
+
+		const controls = new OrbitControls(camera, renderer.domElement);
+		controls.screenSpacePanning = true;
+		controls.target.set(0.0, 1.0, 0.0);
+		controls.update();
+
+		const scene = new THREE.Scene();
+		const pmremGenerator = new THREE.PMREMGenerator(renderer);
+		pmremGenerator.compileEquirectangularShader();
+
+		const light = new THREE.DirectionalLight(0xffffff, 3.0);
+		light.position.set(1.0, 1.0, 1.0).normalize();
+		scene.add(light);
+
+		const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+		scene.add(ambientLight);
+
+		let currentVrm = undefined;
+		let currentMixer = undefined;
+		let currentAction = undefined;
+		let vrmaAnimationClip = undefined;
+		let currentBackgroundTexture = undefined;
+		let currentEnvironmentTexture = undefined;
+		let currentSpeechAudio = undefined;
+		let currentSpeechJobId = 0;
+		let ttsProviderLabel = 'TTS';
+		let audioContext = undefined;
+		let lipSyncAnalyser = undefined;
+		let lipSyncDataArray = undefined;
+		let lipSyncSourceNode = undefined;
+		let currentMouthOpen = 0;
+
+		const loader = new GLTFLoader();
+		loader.crossOrigin = 'anonymous';
+		loader.register((parser) => new VRMLoaderPlugin(parser));
+		loader.register((parser) => new VRMAnimationLoaderPlugin(parser));
+
+		function addChatMessage(role, text, usage = null) {
+			const row = document.createElement('div');
+			row.className = `chat-row ${role}`;
+
+			const bubble = document.createElement('div');
+			bubble.className = 'chat-bubble';
+			bubble.textContent = text;
+
+			if (usage) {
+				const badge = document.createElement('span');
+				badge.className = 'usage-badge';
+				badge.textContent = `Tokens: ${usage.total} (Prompt: ${usage.prompt}, Answer: ${usage.candidates})`;
+				bubble.appendChild(badge);
+			}
+
+			row.appendChild(bubble);
+			chatLog.appendChild(row);
+			chatLog.scrollTop = chatLog.scrollHeight;
+		}
+
+		function addThinkingMessage() {
+			const row = document.createElement('div');
+			row.className = 'chat-row thinking';
+			row.id = 'thinkingMessage';
+
+			const bubble = document.createElement('div');
+			bubble.className = 'chat-bubble';
+			bubble.innerHTML = 'Đang trả lời - sẽ mất thời gian do api free =))  <span class="thinking-dots"><span></span><span></span><span></span></span>';
+
+			row.appendChild(bubble);
+			chatLog.appendChild(row);
+			chatLog.scrollTop = chatLog.scrollHeight;
+		}
+
+		function removeThinkingMessage() {
+			const existingThinking = document.getElementById('thinkingMessage');
+			if (existingThinking) {
+				existingThinking.remove();
+			}
+		}
+
+		function setSpeechBubble(text) {
+			if (!text) {
+				speechBubble.classList.remove('visible');
+				speechBubble.classList.remove('thinking');
+				speechBubble.textContent = '';
+				speechBubble.innerHTML = '';
+				return;
+			}
+
+			const clippedText = text.length > 180 ? `${text.slice(0, 177)}...` : text;
+			speechBubble.textContent = clippedText;
+			speechBubble.classList.add('visible');
+		}
+
+		function showThinkingBubble() {
+			speechBubble.classList.add('visible', 'thinking');
+			speechBubble.innerHTML = '<div class="model-thinking"><span class="model-thinking-label">Đang suy nghĩ</span><span class="thinking-dots"><span></span><span></span><span></span></span></div>';
+		}
+
+		function setMouthOpen(value) {
+			if (!currentVrm?.expressionManager) {
+				return;
+			}
+
+			const mouthValue = THREE.MathUtils.clamp(value, 0, 1);
+			currentVrm.expressionManager.setValue(VRMExpressionPresetName.Aa, mouthValue);
+			currentMouthOpen = mouthValue;
+		}
+
+		function resetLipSync() {
+			lipSyncAnalyser = undefined;
+			lipSyncDataArray = undefined;
+			if (lipSyncSourceNode) {
+				lipSyncSourceNode.disconnect();
+				lipSyncSourceNode = undefined;
+			}
+			setMouthOpen(0);
+		}
+
+		function setupLipSync(audio) {
+			resetLipSync();
+
+			const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+			if (!AudioContextClass) {
+				return;
+			}
+
+			if (!audioContext) {
+				audioContext = new AudioContextClass();
+			}
+
+			if (audioContext.state === 'suspended') {
+				audioContext.resume().catch(() => { });
+			}
+
+			lipSyncSourceNode = audioContext.createMediaElementSource(audio);
+			lipSyncAnalyser = audioContext.createAnalyser();
+			lipSyncAnalyser.fftSize = 512;
+			lipSyncAnalyser.smoothingTimeConstant = 0.72;
+			lipSyncDataArray = new Uint8Array(lipSyncAnalyser.frequencyBinCount);
+
+			lipSyncSourceNode.connect(lipSyncAnalyser);
+			lipSyncAnalyser.connect(audioContext.destination);
+		}
+
+		function updateLipSync() {
+			if (!lipSyncAnalyser || !lipSyncDataArray) {
+				setMouthOpen(THREE.MathUtils.lerp(currentMouthOpen, 0, 0.18));
+				return;
+			}
+
+			lipSyncAnalyser.getByteFrequencyData(lipSyncDataArray);
+			let energy = 0;
+			for (let index = 0; index < lipSyncDataArray.length; index += 1) {
+				energy += lipSyncDataArray[index];
+			}
+
+			const average = energy / lipSyncDataArray.length / 255;
+			const mouthTarget = THREE.MathUtils.clamp((average - 0.04) * 3.2, 0, 1);
+			setMouthOpen(THREE.MathUtils.lerp(currentMouthOpen, mouthTarget, 0.38));
+		}
+
+		async function fetchTtsAudio(text) {
+			const response = await fetch(TTS_API_URL, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					text,
+					speed: 1,
+					pitch: 1,
+				}),
+			});
+
+			const payload = await response.json();
+			if (!response.ok || !payload.ok || !payload.audioBase64) {
+				throw new Error(payload.error || 'TTS hiện không khả dụng');
+			}
+
+			return payload;
+		}
+
+		function playAudioFromPayload(payload) {
+			return new Promise((resolve, reject) => {
+				const audio = new Audio(`data:${payload.mimeType || 'audio/webm; codecs=opus'};base64,${payload.audioBase64}`);
+				currentSpeechAudio = audio;
+				setupLipSync(audio);
+
+				audio.addEventListener('ended', () => {
+					resetLipSync();
+					resolve();
+				}, { once: true });
+				audio.addEventListener('error', () => {
+					resetLipSync();
+					reject(new Error('Không thể phát audio từ TTS.'));
+				}, { once: true });
+
+				audio.play().catch(reject);
+			});
+		}
+
+		async function speakText(text, lang = 'vi-VN') {
+			if (!text) {
+				return;
+			}
+
+			const speechJobId = ++currentSpeechJobId;
+			assistantState.textContent = `Sếp đang lấy hơi...`;
+			if (currentSpeechAudio) {
+				currentSpeechAudio.pause();
+				currentSpeechAudio.src = '';
+				currentSpeechAudio = undefined;
+				resetLipSync();
+			}
+			const payload = await fetchTtsAudio(text);
+			if (speechJobId !== currentSpeechJobId) {
+				return;
+			}
+
+			assistantState.textContent = `Sếp đang lên tiếng...`;
+			await playAudioFromPayload(payload);
+		}
+
+		function disposeBackgroundTextures() {
+			if (currentBackgroundTexture) {
+				currentBackgroundTexture.dispose();
+				currentBackgroundTexture = undefined;
+			}
+
+			if (currentEnvironmentTexture) {
+				currentEnvironmentTexture.dispose();
+				currentEnvironmentTexture = undefined;
+			}
+		}
+
+		function createGradientBackgroundTexture() {
+			const canvas = document.createElement('canvas');
+			canvas.width = 1024;
+			canvas.height = 512;
+
+			const context = canvas.getContext('2d');
+			const gradient = context.createLinearGradient(0, 0, canvas.width, canvas.height);
+			gradient.addColorStop(0, '#09111f');
+			gradient.addColorStop(0.45, '#12395f');
+			gradient.addColorStop(1, '#f7b267');
+			context.fillStyle = gradient;
+			context.fillRect(0, 0, canvas.width, canvas.height);
+
+			const glow = context.createRadialGradient(760, 120, 30, 760, 120, 260);
+			glow.addColorStop(0, 'rgba(255, 244, 214, 0.95)');
+			glow.addColorStop(0.35, 'rgba(255, 211, 145, 0.35)');
+			glow.addColorStop(1, 'rgba(255, 211, 145, 0)');
+			context.fillStyle = glow;
+			context.fillRect(0, 0, canvas.width, canvas.height);
+
+			const texture = new THREE.CanvasTexture(canvas);
+			texture.mapping = THREE.EquirectangularReflectionMapping;
+			texture.colorSpace = THREE.SRGBColorSpace;
+			texture.needsUpdate = true;
+			return texture;
+		}
+
+		async function applyBackground({ silent = false } = {}) {
+			const previousStatus = statusDiv.textContent;
+			let shouldRestoreStatus = true;
+
+			if (!silent) {
+				statusDiv.textContent = `Loading background: ${BACKGROUND_PRESET.label}...`;
+			}
+
+			disposeBackgroundTextures();
+
+			try {
+				const hdrTexture = await new RGBELoader().loadAsync(BACKGROUND_PRESET.url);
+				hdrTexture.mapping = THREE.EquirectangularReflectionMapping;
+
+				const envMap = pmremGenerator.fromEquirectangular(hdrTexture).texture;
+				scene.background = hdrTexture;
+				scene.environment = envMap;
+				currentBackgroundTexture = hdrTexture;
+				currentEnvironmentTexture = envMap;
+			} catch (error) {
+				console.error('Error loading background:', error);
+				const fallbackTexture = createGradientBackgroundTexture();
+				scene.background = fallbackTexture;
+				scene.environment = fallbackTexture;
+				currentBackgroundTexture = fallbackTexture;
+
+				if (!silent) {
+					statusDiv.textContent = 'Tải nền HDR thất bại.';
+				}
+				shouldRestoreStatus = false;
+			} finally {
+				if (!silent && shouldRestoreStatus) {
+					statusDiv.textContent = previousStatus;
+				}
+			}
+		}
+
+		async function loadVRM(url) {
+			try {
+				statusDiv.textContent = 'Loading VRM model...';
+
+				return new Promise((resolve, reject) => {
+					loader.load(
+						url,
+						(gltf) => {
+							const vrm = gltf.userData.vrm;
+
+							VRMUtils.removeUnnecessaryVertices(gltf.scene);
+							VRMUtils.combineSkeletons(gltf.scene);
+							VRMUtils.combineMorphs(vrm);
+
+							vrm.scene.traverse((obj) => {
+								obj.frustumCulled = false;
+							});
+
+							if (currentVrm) {
+								scene.remove(currentVrm.scene);
+								currentVrm.dispose();
+							}
+
+							scene.add(vrm.scene);
+							vrm.scene.rotation.y = Math.PI;
+							currentVrm = vrm;
+							currentMixer = new THREE.AnimationMixer(vrm.scene);
+
+							statusDiv.textContent = 'VRM đã sẵn sàng. Chọn một animation để chạy ngay.';
+							resolve(vrm);
+						},
+						(progress) => {
+							const percent = progress.total ? (100.0 * (progress.loaded / progress.total)).toFixed(1) : '0.0';
+							statusDiv.textContent = `Loading VRM model... ${percent}%`;
+						},
+						(error) => {
+							console.error('Error loading VRM:', error);
+							statusDiv.textContent = 'Không thể tải model VRM.';
+							reject(error);
+						}
+					);
+				});
+			} catch (error) {
+				console.error('Error in loadVRM:', error);
+				statusDiv.textContent = 'Không thể tải model VRM.';
+			}
+		}
+
+		async function loadVRMA(url) {
+			if (!currentVrm) {
+				statusDiv.textContent = 'Model VRM chưa sẵn sàng.';
+				return;
+			}
+
+			try {
+				statusDiv.textContent = 'Loading VRMA animation...';
+
+				return new Promise((resolve, reject) => {
+					loader.load(
+						url,
+						(gltf) => {
+							const vrmAnimationData = gltf.userData.vrmAnimations && gltf.userData.vrmAnimations[0];
+
+							if (!vrmAnimationData) {
+								throw new Error('Không tìm thấy animation VRMA hợp lệ trong file.');
+							}
+
+							const clip = createVRMAnimationClip(vrmAnimationData, currentVrm);
+
+							if (!clip) {
+								throw new Error('Không thể tạo animation clip từ dữ liệu VRMA.');
+							}
+
+							vrmaAnimationClip = clip;
+							resolve(vrmaAnimationClip);
+						},
+						(progress) => {
+							const percent = progress.total ? (100.0 * (progress.loaded / progress.total)).toFixed(1) : '0.0';
+							statusDiv.textContent = `Loading VRMA animation... ${percent}%`;
+						},
+						(error) => {
+							console.error('Error loading animation:', error);
+							statusDiv.textContent = `Không thể tải animation: ${error.message}`;
+							reject(error);
+						}
+					);
+				});
+			} catch (error) {
+				console.error('Error in loadVRMA:', error);
+				statusDiv.textContent = 'Không thể tải animation.';
+			}
+		}
+
+		function playAnimation(animationName) {
+			if (!currentVrm || !vrmaAnimationClip || !currentMixer) {
+				statusDiv.textContent = 'Cần tải xong model VRM và animation trước.';
+				return;
+			}
+
+			if (currentAction) {
+				currentAction.stop();
+			}
+
+			try {
+				currentAction = currentMixer.clipAction(vrmaAnimationClip);
+				currentAction.setLoop(THREE.LoopRepeat);
+				currentAction.clampWhenFinished = true;
+				currentAction.reset();
+				currentAction.play();
+
+				statusDiv.textContent = `Đang phát animation ${animationName}.`;
+			} catch (error) {
+				console.error('Error playing animation:', error);
+				statusDiv.textContent = `Không thể phát animation: ${error.message}`;
+			}
+		}
+
+		function stopAnimation() {
+			if (currentAction) {
+				currentAction.stop();
+				currentAction = undefined;
+				currentMixer.stopAllAction();
+
+				if (currentVrm) {
+					currentVrm.humanoid.resetPose();
+				}
+			}
+		}
+
+		function updateButtons() {
+			const hasVrm = currentVrm !== undefined;
+			vrmaButtons.forEach((btn) => {
+				btn.disabled = !hasVrm;
+			});
+		}
+
+		async function playAnimationByName(animationName) {
+			const animationIndex = Array.from(vrmaButtons).findIndex((button) => button.textContent.trim() === animationName);
+			if (animationIndex === -1 || !currentVrm) {
+				return;
+			}
+
+			stopAnimation();
+			vrmaAnimationClip = undefined;
+			await loadVRMA(VRMA_ANIMATION_URLS[animationIndex]);
+			playAnimation(animationName);
+		}
+
+		async function checkChatbotHealth() {
+			try {
+				const [chatResponse, ttsResponse] = await Promise.all([
+					fetch(CHAT_HEALTH_URL),
+					fetch('http://127.0.0.1:8002/health'),
+				]);
+				const payload = await chatResponse.json();
+				const ttsPayload = await ttsResponse.json();
+				if (!payload.ok) {
+					throw new Error(payload.error || 'Backend chatbot chưa sẵn sàng.');
+				}
+
+				if (payload.model) {
+					const modelSelect = document.getElementById('modelSelect');
+					if (modelSelect) {
+						if (!Array.from(modelSelect.options).some(opt => opt.value === payload.model)) {
+							modelSelect.add(new Option(payload.model, payload.model));
+						}
+						modelSelect.value = payload.model;
+					}
+				}
+
+				ttsProviderLabel = ttsPayload.provider || 'TTS';
+				assistantState.textContent = `Tổng tài Cánh Cụt đã sẵn sàng đợi lệnh.`;
+				return true;
+			} catch (error) {
+				assistantState.textContent = '(Mất kết nối server) do server quá tải hoặc api free đã hết lượt.';
+				return false;
+			}
+		}
+
+		vrmaButtons.forEach((button) => {
+			button.addEventListener('click', async () => {
+				await playAnimationByName(button.textContent.trim());
+			});
+		});
+
+		chatForm.addEventListener('submit', async (event) => {
+			event.preventDefault();
+			const message = chatInput.value.trim();
+
+			if (!message) {
+				return;
+			}
+
+			addChatMessage('user', message);
+			chatInput.value = '';
+			chatInput.focus();
+			sendButton.disabled = true;
+			assistantState.textContent = 'AI đang suy nghĩ...';
+			showThinkingBubble();
+			addThinkingMessage();
+			await playAnimationByName('Thinking');
+
+			try {
+				const response = await fetch(CHAT_API_URL, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						message,
+						model: document.getElementById('modelSelect') ? document.getElementById('modelSelect').value : undefined,
+						api_key: document.getElementById('customApiKeyInput') ? document.getElementById('customApiKeyInput').value : undefined
+					}),
+				});
+
+				const payload = await response.json();
+				if (!response.ok || !payload.ok) {
+					throw new Error(payload.error || 'Gửi yêu cầu tới chatbot thất bại.');
+				}
+
+				removeThinkingMessage();
+				setSpeechBubble('');
+				addChatMessage('assistant', payload.reply, payload.usage);
+				assistantState.textContent = `Sếp đã trả lời xong.`;
+				void speakText(payload.reply, payload.voice || 'vi-VN').catch((error) => {
+					console.error('TTS lỗi:', error);
+					assistantState.textContent = `TTS lỗi: ${error.message}`;
+				});
+				await playAnimationByName(payload.animation || 'Relax');
+			} catch (error) {
+				const messageText = `Không gọi được chatbot: ${error.message}`;
+				removeThinkingMessage();
+				setSpeechBubble('');
+				addChatMessage('assistant', messageText);
+				assistantState.textContent = 'Sếp đang có việc bận, hệ thống trục trặc mất rồi.';
+				await playAnimationByName('Sad');
+			} finally {
+				sendButton.disabled = false;
+			}
+		});
+
+		window.addEventListener('resize', () => {
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+			renderer.setSize(window.innerWidth, window.innerHeight);
+		});
+
+		const clock = new THREE.Clock();
+
+		function animate() {
+			requestAnimationFrame(animate);
+
+			const deltaTime = clock.getDelta();
+
+			if (currentVrm) {
+				currentVrm.update(deltaTime);
+			}
+			if (currentMixer) {
+				currentMixer.update(deltaTime);
+			}
+			updateLipSync();
+
+			controls.update();
+			renderer.render(scene, camera);
+		}
+
+		animate();
+
+		window.addEventListener('DOMContentLoaded', async () => {
+			try {
+				await applyBackground({ silent: true });
+				await loadVRM(VRM_MODEL_URL);
+				updateButtons();
+				await playAnimationByName('LookAround');
+				addChatMessage('assistant', 'Ngoan nào bảo bối, có chuyện gì vướng mắc thì cứ nói anh nghe.');
+				setSpeechBubble('');
+				await checkChatbotHealth();
+			} catch (e) {
+				console.error(e);
+			} finally {
+				const overlay = document.getElementById('loadingOverlay');
+				if (overlay) {
+					overlay.style.opacity = '0';
+					overlay.style.visibility = 'hidden';
+				}
+			}
+		});
+
+		document.getElementById('manualReloadBtn').addEventListener('click', () => {
+			assistantState.textContent = 'Đang gọi lại Sếp...';
+			checkChatbotHealth();
+		});
+
+	</script>
+</body>
+
+</html>

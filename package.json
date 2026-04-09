@@ -1,0 +1,27 @@
+{
+  "name": "vrm-ai-chatbox",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "kill-port 8000 8001 8002",
+    "dev": "concurrently -k -n viewer,chatbot,tts -c blue,green,magenta \"npm:dev:viewer\" \"npm:dev:chatbot\" \"npm:dev:tts\"",
+    "dev:viewer": "vite --host 127.0.0.1 --port 8000 --strictPort",
+    "dev:chatbot": "nodemon --watch api/chat.py --watch .env --ext py,env --exec \"venv\\\\Scripts\\\\python.exe api/chat.py\"",
+    "dev:tts": "nodemon --watch api/tts.js --watch .env --ext js,env --exec \"node api/tts.js\"",
+    "tts": "node api/tts.js"
+  },
+  "dependencies": {
+    "@pixiv/three-vrm": "^3.4.2",
+    "@pixiv/three-vrm-animation": "^3.4.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "three": "^0.176.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "kill-port": "^2.0.1",
+    "nodemon": "^3.1.10",
+    "vite": "^7.1.5"
+  }
+}
