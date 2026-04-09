@@ -1,8 +1,6 @@
 {
   "version": 2,
-  "buildCommand": null,
-  "framework": null,
-  "outputDirectory": ".",
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/api/chat/(.*)",
