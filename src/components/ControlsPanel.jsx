@@ -1,20 +1,26 @@
-import React, { useState, useEffect } from 'react';
-
-const ANIMATION_NAMES = [
-    'Angry', 'Blush', 'Clapping', 'Goodbye', 'Jump',
-    'LookAround', 'Relax', 'Sad', 'Sleepy', 'Surprised', 'Thinking'
-];
+import React, { useState } from 'react';
 
 export function ControlsPanel({
     vrmModel,
     onVrmChange,
+    animationNames,
     animations,
     onAnimationPlay,
     status,
     isCollapsed,
     onToggle,
+    backgroundType,
+    onBackgroundTypeChange,
 }) {
     const [activeAnimation, setActiveAnimation] = useState(null);
+
+    const animationLabelMap = {
+        'Show full body': 'Show',
+        'Peace sign': 'Peace',
+        'Model pose': 'Pose',
+    };
+
+    const formatAnimationLabel = (name) => animationLabelMap[name] || String(name).replace(/\s+/g, '');
 
     const handleAnimationClick = (index, animation) => {
         if (!animation?.clip) {
@@ -57,16 +63,58 @@ export function ControlsPanel({
                 </div>
 
                 <div className="section">
+                    <label>Background</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <button
+                            onClick={() => onBackgroundTypeChange?.('video')}
+                            style={{
+                                padding: '11px 12px',
+                                border: backgroundType === 'video' ? '1.5px solid #1E40AF' : '1.5px solid rgba(59, 130, 246, 0.4)',
+                                borderRadius: '14px',
+                                background: backgroundType === 'video' ? 'linear-gradient(135deg, #1E40AF 0%, #1e3a8a 100%)' : 'linear-gradient(135deg, transparent 0%, rgba(59, 130, 246, 0.02) 100%)',
+                                color: backgroundType === 'video' ? '#ffffff' : '#3b82f6',
+                                cursor: 'pointer',
+                                fontFamily: 'inherit',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                transition: 'all 0.2s ease',
+                                boxShadow: backgroundType === 'video' ? '0 8px 20px rgba(30, 64, 175, 0.4)' : '0 2px 8px rgba(59, 130, 246, 0.08)',
+                            }}
+                        >
+                            Video
+                        </button>
+                        <button
+                            onClick={() => onBackgroundTypeChange?.('hdr')}
+                            style={{
+                                padding: '11px 12px',
+                                border: backgroundType === 'hdr' ? '1.5px solid #1E40AF' : '1.5px solid rgba(59, 130, 246, 0.4)',
+                                borderRadius: '14px',
+                                background: backgroundType === 'hdr' ? 'linear-gradient(135deg, #1E40AF 0%, #1e3a8a 100%)' : 'linear-gradient(135deg, transparent 0%, rgba(59, 130, 246, 0.02) 100%)',
+                                color: backgroundType === 'hdr' ? '#ffffff' : '#3b82f6',
+                                cursor: 'pointer',
+                                fontFamily: 'inherit',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                transition: 'all 0.2s ease',
+                                boxShadow: backgroundType === 'hdr' ? '0 8px 20px rgba(30, 64, 175, 0.4)' : '0 2px 8px rgba(59, 130, 246, 0.08)',
+                            }}
+                        >
+                            HDR
+                        </button>
+                    </div>
+                </div>
+
+                <div className="section">
                     <label className="vrma-buttons-label">VRMA Animations</label>
                     <div className="vrma-buttons">
-                        {ANIMATION_NAMES.map((name, index) => (
+                        {(animationNames || []).map((name, index) => (
                             <button
                                 key={name}
                                 className={`vrma-btn ${activeAnimation === index ? 'active' : ''}`}
                                 onClick={() => handleAnimationClick(index, animations?.[index])}
                                 disabled={!animations || !animations[index]}
                             >
-                                {name}
+                                {formatAnimationLabel(name)}
                             </button>
                         ))}
                     </div>

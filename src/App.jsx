@@ -19,6 +19,13 @@ const ANIMATION_NAMES = [
     'Sleepy',
     'Surprised',
     'Thinking',
+    'Show full body',
+    'Greeting',
+    'Peace sign',
+    'Shoot',
+    'Spin',
+    'Model pose',
+    'Squat',
 ];
 
 export default function App() {
@@ -36,6 +43,7 @@ export default function App() {
     const [mouthOpen, setMouthOpen] = useState(0);
     const [speechBubbleText, setSpeechBubbleText] = useState('');
     const [isThinking, setIsThinking] = useState(false);
+    const [backgroundType, setBackgroundType] = useState('video');
     const hasAutoPlayedOnEntryRef = useRef(false);
     const hadBlushAutoPlayOnModelChangeRef = useRef(false);
 
@@ -223,6 +231,7 @@ export default function App() {
                 onAnimationsLoaded={setAnimations}
                 mouthOpen={mouthOpen}
                 selectedAnimation={selectedAnimation}
+                backgroundType={backgroundType}
             />
 
             <SpeechBubble text={speechBubbleText} isThinking={isThinking} />
@@ -230,11 +239,14 @@ export default function App() {
             <ControlsPanel
                 vrmModel={vrmModel}
                 onVrmChange={setVrmModel}
+                animationNames={ANIMATION_NAMES}
                 animations={animations}
                 onAnimationPlay={handleAnimationPlay}
                 status={status}
                 isCollapsed={controlsCollapsed}
                 onToggle={() => setControlsCollapsed(!controlsCollapsed)}
+                backgroundType={backgroundType}
+                onBackgroundTypeChange={setBackgroundType}
             />
 
             <ChatPanel

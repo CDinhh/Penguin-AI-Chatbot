@@ -21,6 +21,13 @@ const VRMA_ANIMATION_URLS = [
     getUrl('VRMA/Sleepy.vrma'),
     getUrl('VRMA/Surprised.vrma'),
     getUrl('VRMA/Thinking.vrma'),
+    getUrl('VRMA/VRMA_01.vrma'),
+    getUrl('VRMA/VRMA_02.vrma'),
+    getUrl('VRMA/VRMA_03.vrma'),
+    getUrl('VRMA/VRMA_04.vrma'),
+    getUrl('VRMA/VRMA_05.vrma'),
+    getUrl('VRMA/VRMA_06.vrma'),
+    getUrl('VRMA/VRMA_07.vrma'),
 ];
 
 const BACKGROUND_PRESET = {
@@ -34,6 +41,7 @@ export function VRMViewer({
     onStatusChange,
     mouthOpen,
     selectedAnimation,
+    backgroundType,
 }) {
     const containerRef = useRef(null);
     const rendererRef = useRef(null);
@@ -96,33 +104,51 @@ export function VRMViewer({
 
             const loadBackground = async () => {
                 try {
-                    const rgbeLoader = new RGBELoader();
-                    const texture = await rgbeLoader.loadAsync(BACKGROUND_PRESET.url);
-                    texture.mapping = THREE.EquirectangularReflectionMapping;
+                    if (backgroundType === 'hdr') {
+                        // Load HDR environment map
+                        const rgbeLoader = new RGBELoader();
+                        const texture = await rgbeLoader.loadAsync(BACKGROUND_PRESET.url);
+                        texture.mapping = THREE.EquirectangularReflectionMapping;
 
-                    const pmremGenerator = new THREE.PMREMGenerator(renderer);
-                    const envMap = pmremGenerator.fromEquirectangular(texture).texture;
-                    scene.background = texture;
-                    scene.environment = envMap;
-                    pmremGenerator.dispose();
+                        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+                        const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+                        scene.background = texture;
+                        scene.environment = envMap;
+                        pmremGenerator.dispose();
+                    } else {
+                        // Video mode: use video element as texture
+                        const video = document.createElement('video');
+                        video.src = getUrl('video.mp4');
+                        video.loop = true;
+                        video.muted = true;
+                        video.play().catch(() => {
+                            console.warn('Failed to play video, using gradient fallback');
+                            createGradientBackground(scene);
+                        });
+
+                        const videoTexture = new THREE.VideoTexture(video);
+                        scene.background = videoTexture;
+                    }
                 } catch (error) {
                     console.warn('Failed to load background:', error);
-                    const canvas = document.createElement('canvas');
-                    canvas.width = 1024;
-                    canvas.height = 512;
-                    const ctx = canvas.getContext('2d');
-                    const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-                    grad.addColorStop(0, '#09111f');
-                    grad.addColorStop(0.45, '#12395f');
-                    grad.addColorStop(1, '#f7b267');
-                    ctx.fillStyle = grad;
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                    const texture = new THREE.CanvasTexture(canvas);
-                    texture.mapping = THREE.EquirectangularReflectionMapping;
-                    scene.background = texture;
+                    createGradientBackground(scene);
                 }
                 setIsLoading(false);
+            };
+
+            const createGradientBackground = (scn) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = 1024;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+                const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                grad.addColorStop(0, '#09111f');
+                grad.addColorStop(0.45, '#12395f');
+                grad.addColorStop(1, '#f7b267');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                const texture = new THREE.CanvasTexture(canvas);
+                scn.background = texture;
             };
 
             loadBackground();
@@ -281,6 +307,65 @@ export function VRMViewer({
             actionRef.current = action;
         }
     }, [selectedAnimation]);
+
+    // Reload background when type changes
+    useEffect(() => {
+        if (!sceneRef.current || !rendererRef.current) return;
+
+        (async () => {
+            try {
+                if (backgroundType === 'hdr') {
+                    const rgbeLoader = new RGBELoader();
+                    const texture = await rgbeLoader.loadAsync(BACKGROUND_PRESET.url);
+                    texture.mapping = THREE.EquirectangularReflectionMapping;
+
+                    const pmremGenerator = new THREE.PMREMGenerator(rendererRef.current);
+                    const envMap = pmremGenerator.fromEquirectangular(texture).texture;
+                    sceneRef.current.background = texture;
+                    sceneRef.current.environment = envMap;
+                    pmremGenerator.dispose();
+                } else {
+                    // Video mode: use video element as texture
+                    const video = document.createElement('video');
+                    video.src = getUrl('video.mp4');
+                    video.loop = true;
+                    video.muted = true;
+                    video.play().catch(() => {
+                        console.warn('Failed to play video, using gradient fallback');
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 1024;
+                        canvas.height = 512;
+                        const ctx = canvas.getContext('2d');
+                        const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                        grad.addColorStop(0, '#09111f');
+                        grad.addColorStop(0.45, '#12395f');
+                        grad.addColorStop(1, '#f7b267');
+                        ctx.fillStyle = grad;
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        const texture = new THREE.CanvasTexture(canvas);
+                        sceneRef.current.background = texture;
+                    });
+
+                    const videoTexture = new THREE.VideoTexture(video);
+                    sceneRef.current.background = videoTexture;
+                }
+            } catch (error) {
+                console.warn('Failed to reload background:', error);
+                const canvas = document.createElement('canvas');
+                canvas.width = 1024;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+                const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                grad.addColorStop(0, '#09111f');
+                grad.addColorStop(0.45, '#12395f');
+                grad.addColorStop(1, '#f7b267');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                const texture = new THREE.CanvasTexture(canvas);
+                sceneRef.current.background = texture;
+            }
+        })();
+    }, [backgroundType]);
 
     return (
         <div ref={containerRef} style={{ width: '100%', height: '100%' }}>

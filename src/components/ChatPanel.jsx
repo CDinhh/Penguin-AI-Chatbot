@@ -43,9 +43,8 @@ export function ChatPanel({
 
             <div className={`chat-shell ${isCollapsed ? 'is-collapsed' : ''}`}>
                 <div className="panel-header">
-                    <span className="eyebrow">Trò Chuyện</span>
                     <div className="panel-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontWeight: 800, color: '#1E40AF' }}>Tổng tài</span>
+                        <span style={{ fontWeight: 800, color: '#1E40AF' }}>Tổng tài (Model Penguin)</span>
                         <span
                             style={{
                                 display: 'inline-block',
@@ -59,7 +58,7 @@ export function ChatPanel({
                         ></span>
                     </div>
                     <div className="panel-subtitle" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <span>Sếp luôn ở đây lắng nghe và hỗ trợ em giải quyết mọi vấn đề.</span>
+                        <span>Chat trò chuyện và nghe voice trực tiếp (giọng Adam - Trai Bắc)</span>
                         <div style={{ display: 'grid', gridTemplateColumns: 'max-content 1fr', gap: '12px', alignItems: 'center', width: '100%' }}>
                             <span style={{ fontSize: '11px', color: '#6b7280', whiteSpace: 'nowrap', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Mô hình:</span>
                             <select
