@@ -1,4 +1,14 @@
 {
   "buildCommand": "npm run build",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/api/chat(.*)",
+      "destination": "/api/chat.py"
+    },
+    {
+      "source": "/api/tts(.*)",
+      "destination": "/api/tts.js"
+    }
+  ]
 }

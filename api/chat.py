@@ -17,9 +17,10 @@ if hasattr(sys.stderr, "reconfigure"):
 
 
 def load_local_env() -> None:
-	# Now we are in api/chat/index.py, root is 3 levels up
-	root = Path(__file__).parent.parent.parent
-	env_path = root / ".env"
+	# Back in api/chat.py, root is 2 levels up
+	env_path = Path(__file__).parent.parent / ".env"
+	if not env_path.exists():
+		env_path = Path(__file__).with_name(".env")
 	if not env_path.exists():
 		return
 
@@ -205,21 +206,16 @@ class ChatbotHandler(BaseHTTPRequestHandler):
 		self._send_json(200, {"ok": True})
 
 	def do_GET(self) -> None:
-		# On Vercel, when routed to index.py, any GET can be a health check
-		# We check if it ends with /health or is to the root of the function
-		p = self.path.lower().split("?")[0]
-		if "health" in p or p.endswith("/chat") or p.endswith("/chat/") or p == "" or p == "/":
-			self._send_json(
-				200,
-				{
-					"ok": chat_session.ready,
-					"model": MODEL_NAME,
-					"error": chat_session.error,
-				},
-			)
-			return
-
-		self._send_json(404, {"ok": False, "error": f"Not found GET {self.path}"})
+		# For local and Vercel: Any GET request to this endpoint is a health/info check
+		self._send_json(
+			200,
+			{
+				"ok": chat_session.ready,
+				"model": MODEL_NAME,
+				"error": chat_session.error,
+			},
+		)
+		return
 
 	def do_POST(self) -> None:
 		# For POST, we don't strictly care about the subpath if it's routed to this file
