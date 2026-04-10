@@ -7,7 +7,7 @@
     "predev": "kill-port 8000 8001 8002",
     "dev": "concurrently -k -n viewer,chatbot,tts -c blue,green,magenta \"npm:dev:viewer\" \"npm:dev:chatbot\" \"npm:dev:tts\"",
     "dev:viewer": "vite --host 127.0.0.1 --port 8000 --strictPort",
-    "dev:chatbot": "nodemon --watch api/chatbot.py --watch .env --ext py,env --exec \"venv\\\\Scripts\\\\python.exe api/chatbot.py\"",
+    "dev:chatbot": "nodemon --watch api/chat.py --watch .env --ext py,env --exec \"venv\\\\Scripts\\\\python.exe api/chat.py\"",
     "dev:tts": "nodemon --watch api/tts.js --watch .env --ext js,env --exec \"node api/tts.js\"",
     "tts": "node api/tts.js"
   },
