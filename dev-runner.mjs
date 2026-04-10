@@ -10,7 +10,7 @@ const services = [
   {
     name: 'chatbot',
     command: pythonExe,
-    args: ['api/chat_api.py'],
+    args: ['api/chatbot.py'],
     cwd: __dirname,
   },
   {
