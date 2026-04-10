@@ -10,13 +10,13 @@ const services = [
   {
     name: 'chatbot',
     command: pythonExe,
-    args: ['api/chat.py'],
+    args: ['api/chat/index.py'],
     cwd: __dirname,
   },
   {
     name: 'tts-server',
     command: 'node',
-    args: ['api/tts.js'],
+    args: ['api/tts/index.js'],
     cwd: __dirname,
   },
   {

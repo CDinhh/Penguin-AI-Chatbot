@@ -17,23 +17,26 @@ if hasattr(sys.stderr, "reconfigure"):
 
 
 def load_local_env() -> None:
-	env_path = Path(__file__).parent.parent / ".env"
-	if not env_path.exists():
-		env_path = Path(__file__).with_name(".env")
+	# Now we are in api/chat/index.py, root is 3 levels up
+	root = Path(__file__).parent.parent.parent
+	env_path = root / ".env"
 	if not env_path.exists():
 		return
 
-	for raw_line in env_path.read_text(encoding="utf-8").splitlines():
-		line = raw_line.strip()
-		if not line or line.startswith("#") or "=" not in line:
-			continue
+	try:
+		for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+			line = raw_line.strip()
+			if not line or line.startswith("#") or "=" not in line:
+				continue
 
-		key, value = line.split("=", 1)
-		key = key.strip()
-		value = value.strip().strip('"').strip("'")
+			key, value = line.split("=", 1)
+			key = key.strip()
+			value = value.strip().strip('"').strip("'")
 
-		if key:
-			os.environ[key] = value
+			if key:
+				os.environ[key] = value
+	except Exception:
+		pass
 
 
 load_local_env()
@@ -202,9 +205,10 @@ class ChatbotHandler(BaseHTTPRequestHandler):
 		self._send_json(200, {"ok": True})
 
 	def do_GET(self) -> None:
-		# Support various health check paths
-		health_paths = ["/health", "/api/chat/health", "/chat/health", "/api/chat", "/chat", "/"]
-		if any(self.path == p or self.path == p + "/" for p in health_paths):
+		# On Vercel, when routed to index.py, any GET can be a health check
+		# We check if it ends with /health or is to the root of the function
+		p = self.path.lower().split("?")[0]
+		if "health" in p or p.endswith("/chat") or p.endswith("/chat/") or p == "" or p == "/":
 			self._send_json(
 				200,
 				{
@@ -218,8 +222,9 @@ class ChatbotHandler(BaseHTTPRequestHandler):
 		self._send_json(404, {"ok": False, "error": f"Not found GET {self.path}"})
 
 	def do_POST(self) -> None:
-		post_paths = ["/chat", "/api/chat", "/"]
-		if not any(self.path == p or self.path == p + "/" for p in post_paths):
+		# For POST, we don't strictly care about the subpath if it's routed to this file
+		self._send_json(404, {"ok": False, "error": f"Not found POST path={self.path}"}) if "chat" not in self.path and self.path != "/" else None
+		if "chat" not in self.path.lower() and self.path != "/":
 			self._send_json(404, {"ok": False, "error": f"Not found POST path={self.path}"})
 			return
 
