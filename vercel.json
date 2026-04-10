@@ -1,10 +1,15 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "functions": {
+    "api/chat_api.py": {
+      "runtime": "vercel-python@0.1.0"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/chat(.*)",
-      "destination": "/api/chat.py"
+      "destination": "/api/chat_api.py"
     },
     {
       "source": "/api/tts(.*)",
