@@ -7,11 +7,12 @@
     "predev": "kill-port 8000 8001 8002",
     "dev": "concurrently -k -n viewer,chatbot,tts -c blue,green,magenta \"npm:dev:viewer\" \"npm:dev:chatbot\" \"npm:dev:tts\"",
     "dev:viewer": "vite --host 127.0.0.1 --port 8000 --strictPort",
-    "dev:chatbot": "nodemon --watch api/chat.py --watch .env --ext py,env --exec \"venv\\\\Scripts\\\\python.exe api/chat.py\"",
+    "dev:chatbot": "nodemon --watch api/chat.js --watch .env --ext js,env --exec \"node api/chat.js\"",
     "dev:tts": "nodemon --watch api/tts.js --watch .env --ext js,env --exec \"node api/tts.js\"",
     "tts": "node api/tts.js"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@pixiv/three-vrm": "^3.4.2",
     "@pixiv/three-vrm-animation": "^3.4.2",
     "cors": "^2.8.5",

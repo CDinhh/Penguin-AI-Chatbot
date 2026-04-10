@@ -4,7 +4,7 @@
   "rewrites": [
     {
       "source": "/api/chat(.*)",
-      "destination": "/api/chat.py"
+      "destination": "/api/chat.js"
     },
     {
       "source": "/api/tts(.*)",

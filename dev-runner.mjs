@@ -4,13 +4,12 @@ import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const pythonExe = path.join(__dirname, 'venv', 'Scripts', 'python.exe');
 
 const services = [
   {
     name: 'chatbot',
-    command: pythonExe,
-    args: ['api/chat.py'],
+    command: 'node',
+    args: ['api/chat.js'],
     cwd: __dirname,
   },
   {
@@ -21,8 +20,8 @@ const services = [
   },
   {
     name: 'viewer',
-    command: pythonExe,
-    args: ['-m', 'http.server', '8000'],
+    command: 'npx',
+    args: ['vite', '--port', '8000', '--host', '127.0.0.1'],
     cwd: __dirname,
   },
 ];
@@ -66,6 +65,7 @@ for (const service of services) {
   const child = spawn(service.command, service.args, {
     cwd: service.cwd,
     stdio: ['ignore', 'pipe', 'pipe'],
+    shell: true, // Needed for npx on Windows
   });
 
   children.push(child);
@@ -84,5 +84,5 @@ process.on('SIGTERM', () => shutdown(0));
 
 console.log('All services are starting...');
 console.log('Viewer: http://127.0.0.1:8000');
-console.log('Chat API: http://127.0.0.1:8001/health');
-console.log('TTS Server: http://127.0.0.1:8002/health');
+console.log('Chat API: http://127.0.0.1:8001/chat/health');
+console.log('TTS Server: http://127.0.0.1:8002/tts/health');
