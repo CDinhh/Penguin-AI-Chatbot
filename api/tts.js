@@ -140,7 +140,7 @@ const synthesizeWithVclip = async ({ text, speed }) => {
   return payload;
 };
 
-app.get(['/health', '/api/tts/health', '/api/tts', '/'], (_req, res) => {
+app.get(['/health', '/api/tts/health', '/tts/health', '/api/tts', '/tts', '/'], (_req, res) => {
   res.status(200).json({
     ok: true,
     service: 'tts',

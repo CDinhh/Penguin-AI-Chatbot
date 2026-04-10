@@ -546,29 +546,31 @@
 		const sendButton = document.getElementById('sendButton');
 
 		const isProd = window.location.hostname !== '127.0.0.1' && window.location.hostname !== 'localhost';
+		const getUrl = (path) => isProd ? `./${path}` : `./public/${path}`;
+
 		const CHAT_API_URL = isProd ? '/api/chat' : 'http://127.0.0.1:8001/chat';
-		const CHAT_HEALTH_URL = CHAT_API_URL;
+		const CHAT_HEALTH_URL = isProd ? '/api/chat/health' : 'http://127.0.0.1:8001/chat/health';
 		const TTS_API_URL = isProd ? '/api/tts' : 'http://127.0.0.1:8002/tts';
-		const TTS_HEALTH_URL = TTS_API_URL;
+		const TTS_HEALTH_URL = isProd ? '/api/tts/health' : 'http://127.0.0.1:8002/tts/health';
 		const TTS_VOICE = '8VXsCLxU7Pn55ADXQc6sAb';
-		const VRM_MODEL_URL = './VRM/penguin.vrm';
+		const VRM_MODEL_URL = getUrl('VRM/penguin.vrm');
 		const VRMA_ANIMATION_URLS = [
-			'./VRMA/Angry.vrma',
-			'./VRMA/Blush.vrma',
-			'./VRMA/Clapping.vrma',
-			'./VRMA/Goodbye.vrma',
-			'./VRMA/Jump.vrma',
-			'./VRMA/LookAround.vrma',
-			'./VRMA/Relax.vrma',
-			'./VRMA/Sad.vrma',
-			'./VRMA/Sleepy.vrma',
-			'./VRMA/Surprised.vrma',
-			'./VRMA/Thinking.vrma',
+			getUrl('VRMA/Angry.vrma'),
+			getUrl('VRMA/Blush.vrma'),
+			getUrl('VRMA/Clapping.vrma'),
+			getUrl('VRMA/Goodbye.vrma'),
+			getUrl('VRMA/Jump.vrma'),
+			getUrl('VRMA/LookAround.vrma'),
+			getUrl('VRMA/Relax.vrma'),
+			getUrl('VRMA/Sad.vrma'),
+			getUrl('VRMA/Sleepy.vrma'),
+			getUrl('VRMA/Surprised.vrma'),
+			getUrl('VRMA/Thinking.vrma'),
 		];
 
 		const BACKGROUND_PRESET = {
 			label: 'Passendorf Snow',
-			url: './hdr/passendorf_snow_4k.hdr',
+			url: getUrl('hdr/passendorf_snow_4k.hdr'),
 		};
 
 		const renderer = new THREE.WebGLRenderer({ antialias: true });

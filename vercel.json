@@ -7,12 +7,12 @@
       "destination": "/api/chat.py"
     },
     {
-      "source": "/api/chat",
-      "destination": "/api/chat.py"
-    },
-    {
       "source": "/api/tts/(.*)",
       "destination": "/api/tts.js"
+    },
+    {
+      "source": "/api/chat",
+      "destination": "/api/chat.py"
     },
     {
       "source": "/api/tts",
