@@ -414,8 +414,13 @@
 		}
 
 		@keyframes spinLoad {
-			0% { transform: rotate(0deg); }
-			100% { transform: rotate(360deg); }
+			0% {
+				transform: rotate(0deg);
+			}
+
+			100% {
+				transform: rotate(360deg);
+			}
 		}
 
 		@media (max-width: 640px) {
@@ -498,8 +503,12 @@
 					<span style="font-size: 11px; color: #9ca3af; white-space: nowrap;">Mô hình:</span>
 					<select id="modelSelect"
 						style="background:#ffffff; color:#1f2937; border: 1px solid #e5e7eb; padding:4px 8px; border-radius:4px; font-size:12px; outline:none; cursor: pointer; width: 100%;">
-						<option value="gemma-3-27b-it">Gemma 3 27B (lỏ nhưng dùng được nhiều)</option>
-						<option value="gemini-2.5-flash">Gemini 2.5 Flash (dùng vài cái hết token)</option>
+						<optgroup label="Khuyên dùng">
+							<option value="gemini-3.1-flash-lite-preview" selected>Gemini 3.1 Flash Lite Preview (mặc
+								định)</option>
+							<option value="gemini-3-flash-preview">Gemini 3 Flash Preview</option>
+							<option value="gemma-3-27b-it">Gemma 3 27B IT (dự phòng quota cao)</option>
+						</optgroup>
 					</select>
 					<span style="font-size: 11px; color: #9ca3af; white-space: nowrap;">Google AI Studio Key:</span>
 					<input id="customApiKeyInput" type="password" placeholder="nếu key default hết token"
@@ -1044,10 +1053,25 @@
 				if (payload.model) {
 					const modelSelect = document.getElementById('modelSelect');
 					if (modelSelect) {
-						if (!Array.from(modelSelect.options).some(opt => opt.value === payload.model)) {
-							modelSelect.add(new Option(payload.model, payload.model));
+						const selectedBeforeHealthCheck = modelSelect.value;
+						if (Array.isArray(payload.availableModels)) {
+							for (const modelName of payload.availableModels) {
+								if (!Array.from(modelSelect.options).some(opt => opt.value === modelName)) {
+									modelSelect.add(new Option(modelName, modelName));
+								}
+							}
 						}
-						modelSelect.value = payload.model;
+
+						if (selectedBeforeHealthCheck && Array.from(modelSelect.options).some(opt => opt.value === selectedBeforeHealthCheck)) {
+							modelSelect.value = selectedBeforeHealthCheck;
+						} else if (payload.defaultModel && Array.from(modelSelect.options).some(opt => opt.value === payload.defaultModel)) {
+							modelSelect.value = payload.defaultModel;
+						} else if (!Array.from(modelSelect.options).some(opt => opt.value === payload.model)) {
+							modelSelect.add(new Option(payload.model, payload.model));
+							modelSelect.value = payload.model;
+						} else {
+							modelSelect.value = payload.model;
+						}
 					}
 				}
 
@@ -1115,7 +1139,7 @@
 				removeThinkingMessage();
 				setSpeechBubble('');
 				addChatMessage('assistant', messageText);
-				assistantState.textContent = 'Sếp đang có việc bận, hệ thống trục trặc mất rồi.';
+				assistantState.textContent = 'API trục trặc mất rồi, thử đổi model nhé';
 				await playAnimationByName('Sad');
 			} finally {
 				sendButton.disabled = false;

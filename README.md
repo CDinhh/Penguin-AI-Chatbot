@@ -5,7 +5,7 @@ Hệ thống chatbot avatar 3D tích hợp AI (Gemini) và Text-to-Speech (Vclip
 Dự án hiện đã được chuyển đổi sang **100% Node.js** để đảm bảo tính ổn định tối đa và hiệu suất cao nhất khi triển khai trên Vercel.
 
 Dự án gồm 3 phần chính hoạt động trơn tru cùng nhau:
-- `api/chat.js`: API Serverless bằng Node.js giao tiếp với Google Gemini (Hỗ trợ model gemma-3 mới nhất).
+- `api/chat.js`: API Serverless bằng Node.js giao tiếp với Google Gemini (tối ưu model và fallback tự động).
 - `api/tts.js`: API Serverless bằng Node.js (Express) để tổng hợp giọng nói cực mượt thông qua Vclip.
 - `index.html`: Giao diện VRM viewer tương tác 3D chân thực ở frontend (Three.js & `@pixiv/three-vrm`).
 
@@ -18,13 +18,27 @@ Penguin-AI-Chatbot/
 |  |- tts.js        # TTS API (Node.js)
 |- dev-runner.mjs   # Script khởi chạy multi-service local
 |- index.html       # Web App Frontend tĩnh
+|- list-models.mjs  # Script liệt kê model khả dụng từ API key hiện tại
 |- vercel.json      # Cấu hình định tuyến và deploy Vercel
 |- package.json
 |- .env
-|- VRM/             # Mô hình 3D (.vrm)
-|- VRMA/            # Gói Animations (.vrma)
-|- hdr/             # Môi trường ánh sáng (.hdr)
+|- public/
+|  |- VRM/          # Mô hình 3D (.vrm)
+|  |- VRMA/         # Gói Animations (.vrma)
+|  |- hdr/          # Môi trường ánh sáng (.hdr)
 ```
+
+## Cấu hình model chat (Khuyên dùng)
+
+Ứng dụng hiện tối ưu cho 3 model chính:
+- `gemini-3.1-flash-lite-preview` (mặc định): nhanh và quota tốt.
+- `gemini-3-flash-preview`: chất lượng nhỉnh hơn, quota thấp hơn.
+- `gemma-3-27b-it`: model dự phòng quota cao để giữ hội thoại không bị gián đoạn.
+
+Logic fallback tự động trong `api/chat.js`:
+1. Bắt đầu từ model đang chọn (mặc định là Flash Lite).
+2. Nếu gặp lỗi tạm thời như `429`, `503`, `quota`, `high demand`, hệ thống tự chuyển sang model kế tiếp.
+3. Thứ tự fallback: `gemini-3.1-flash-lite-preview` -> `gemini-3-flash-preview` -> `gemma-3-27b-it`.
 
 ## Yêu cầu môi trường (Chạy Local)
 
@@ -49,7 +63,23 @@ Tạo file `.env` (hoặc copy từ `.env.example`) đặt ngay tại thư mục
 GEMINI_API_KEY=your_gemini_api_key_here
 VCLIP_API_KEY=your_vclip_api_key_here
 VCLIP_VOICE_ID=your_vclip_voice_id_here
+
+# Tuỳ chọn
+# GEMINI_MODEL=gemini-3.1-flash-lite-preview
+# MAX_REPLY_CHARS=260
 ```
+
+Ghi chú:
+- Nếu không đặt `GEMINI_MODEL`, hệ thống dùng mặc định `gemini-3.1-flash-lite-preview`.
+- `MAX_REPLY_CHARS` giúp giới hạn độ dài câu trả lời để TTS đọc gọn hơn.
+
+### Kiểm tra danh sách model khả dụng theo API key hiện tại
+
+```powershell
+node list-models.mjs
+```
+
+Lệnh trên sẽ gọi `ListModels` và in ra các model hỗ trợ `generateContent`.
 
 ## Khởi chạy Local (Development)
 
