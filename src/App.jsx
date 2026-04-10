@@ -11,6 +11,7 @@ const ANIMATION_NAMES = [
     'Angry',
     'Blush',
     'Clapping',
+    'Dancing',
     'Goodbye',
     'Jump',
     'LookAround',
@@ -39,6 +40,7 @@ export default function App() {
     const [chatCollapsed, setChatCollapsed] = useState(false);
     const [animations, setAnimations] = useState([]);
     const [selectedAnimation, setSelectedAnimation] = useState(null);
+    const [activeAnimationIndex, setActiveAnimationIndex] = useState(null);
     const [pendingAnimationName, setPendingAnimationName] = useState(null);
     const [mouthOpen, setMouthOpen] = useState(0);
     const [speechBubbleText, setSpeechBubbleText] = useState('');
@@ -109,6 +111,7 @@ export default function App() {
             name: animation.name || `anim-${index}`,
             playId: `${Date.now()}-${Math.random()}`,
         });
+        setActiveAnimationIndex(index);
         setStatus(`Now Playing: ${ANIMATION_NAMES[index]}`);
         setPendingAnimationName(null);
     }, [animations]);
@@ -139,6 +142,7 @@ export default function App() {
     useEffect(() => {
         hadBlushAutoPlayOnModelChangeRef.current = false;
         setSelectedAnimation(null);
+        setActiveAnimationIndex(null);
         setAnimations([]);
     }, [vrmModel]);
 
@@ -204,7 +208,7 @@ export default function App() {
     const handleManualReload = useCallback(async () => {
         try {
             await checkHealth();
-            setAssistantState('Tổng tài đã sẵn sàng đợi lệnh.');
+            setAssistantState('Tổng tài đã sẵn sàng để nói chuyện nhảm.');
         } catch (error) {
             setAssistantState('(Mất kết nối server) do server quá tải hoặc api free đã hết lượt.');
         }
@@ -220,6 +224,7 @@ export default function App() {
             name: animation.name || `anim-${index}`,
             playId: `${Date.now()}-${Math.random()}`,
         });
+        setActiveAnimationIndex(index);
         setStatus(`Now Playing: ${ANIMATION_NAMES[index] || animation.name || 'Animation'}`);
     }, []);
 
@@ -242,6 +247,7 @@ export default function App() {
                 animationNames={ANIMATION_NAMES}
                 animations={animations}
                 onAnimationPlay={handleAnimationPlay}
+                activeAnimationIndex={activeAnimationIndex}
                 status={status}
                 isCollapsed={controlsCollapsed}
                 onToggle={() => setControlsCollapsed(!controlsCollapsed)}

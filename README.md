@@ -1,163 +1,135 @@
-# VRM AI Chatbox - React + Vite
+# VRM AI Chatbox
 
-Hệ thống chatbot avatar 3D tương tác với AI (Gemini) và Text-to-Speech (Vclip). Ứng dụng được xây dựng với **React 18** + **Vite 7** cho hiệu suất cực cao và trải nghiệm người dùng mượt mà.
+Ứng dụng chatbot avatar 3D chạy trên React + Vite, kết hợp:
+- Chat AI (Google Gemini)
+- Text-to-Speech (Vclip)
+- VRM model + VRMA animation (Three.js / Pixiv VRM)
 
-## ✨ Tính năng chính
+## Features
 
-- **3D Avatar Interactivity**: Mô hình VRM với animation thực tế sử dụng Three.js
-- **Hội thoại AI**: Tích hợp Google Gemini API với model fallback tự động
-- **Text-to-Speech**: Vclip voice synthesis cho phản hồi audio tự nhiên
-- **Múi model linh hoạt**: Hỗ trợ phân kỳ 4 nhân vật VRM khác nhau
-- **Hot Module Reload**: Phát triển nhanh với HMR từ Vite
-- **Deploy dễ dàng**: Triển khai ngay lên Vercel Serverless
+- VRM viewer realtime với background `Video` / `HDR`
+- 4 model VRM có thể đổi ngay trong UI
+- 19 animation VRMA (bao gồm `Dancing.vrma`)
+- Chat panel + TTS + lip-sync theo audio
+- Animation được AI trả về sẽ tự play và đồng bộ trạng thái nút active
+- Loading overlay khi:
+   - vào trang
+   - switch VRM model
+   - toggle background
+- UI mới với:
+   - font `Nunito`
+   - đóng card bằng nút `X` góc phải
+   - khi card đóng, hiện nút mũi tên ở viền để mở lại
 
-## 📁 Cấu trúc thư mục
+## Tech Stack
 
-```
-Penguin-AI-Chatbot/
-├── src/
-│   ├── App.jsx                 # Root React component
-│   ├── App.css                 # Styling
-│   ├── components/
-│   │   ├── VRMViewer.jsx       # Three.js scene & animation
-│   │   ├── ControlsPanel.jsx   # VRM models & animation buttons
-│   │   ├── ChatPanel.jsx       # Chat message & input
-│   │   └── SpeechBubble.jsx    # Floating text bubble
-│   └── hooks/
-│       ├── useChatAPI.js       # Chat API integration
-│       └── useTTSAudio.js      # TTS audio & lip-sync
+- Frontend: React 18, Vite 7
+- 3D: Three.js, `@pixiv/three-vrm`, `@pixiv/three-vrm-animation`
+- UI libs: `framer-motion`, `lucide-react`
+- Backend API: Node.js, Express
+- AI: `@google/generative-ai`
+
+## Project Structure
+
+```txt
+.
 ├── api/
-│   ├── chat.js                 # Chat API (Node.js)
-│   └── tts.js                  # TTS API (Node.js)
+│   ├── chat.js
+│   └── tts.js
 ├── public/
-│   ├── VRM/                    # 3D models (.vrm)
-│   │   ├── penguin.vrm
-│   │   ├── frieren.vrm
-│   │   ├── marin.vrm
-│   │   └── reze.vrm
-│   ├── VRMA/                   # Animations (.vrma)
-│   ├── hdr/                    # Environment lighting
-│   └── *                       # Static assets
-├── index.html                  # HTML entry point
-├── vite.config.js              # Vite configuration
+│   ├── VRM/
+│   ├── VRMA/
+│   └── hdr/
+├── src/
+│   ├── components/
+│   │   ├── VRMViewer.jsx
+│   │   ├── ControlsPanel.jsx
+│   │   ├── ChatPanel.jsx
+│   │   └── SpeechBubble.jsx
+│   ├── hooks/
+│   │   ├── useChatAPI.js
+│   │   └── useTTSAudio.js
+│   ├── App.jsx
+│   └── App.css
+├── index.html
 ├── package.json
-├── .env                        # Environment variables
-├── .env.example                # Environment template
-└── vercel.json                 # Vercel deployment config
+└── vercel.json
 ```
 
-## 🔧 Yêu cầu môi trường
+## Requirements
 
-- **Node.js**: 18+ (khuyên dùng)
-- **NPM**: 9+
-- **API Keys**:
-  - [Google Gemini API](https://aistudio.google.com/) - Chat AI
-  - [Vclip API](https://docs.vclip.org/) - Text-to-Speech
+- Node.js 18+
+- npm 9+
+- API keys:
+   - Gemini API key
+   - Vclip API key
+   - Vclip voice id
 
-## 🚀 Cài đặt & Chạy Local
+## Setup
 
-### 1. Cài đặt thư viện
+1. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 2. Thiết lập Environment Variables
+2. Create `.env` from `.env.example`
 
-Tạo file `.env` từ `.env.example`:
+Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+macOS/Linux:
 
 ```bash
 cp .env.example .env
 ```
 
-Điền đầy đủ API keys vào `.env`:
+3. Fill env values
 
 ```env
-GEMINI_API_KEY=your_gemini_api_key_here
-VCLIP_API_KEY=your_vclip_api_key_here
-VCLIP_VOICE_ID=your_vclip_voice_id_here
-
-# Tuỳ chọn
-# GEMINI_MODEL=gemini-3.1-flash-lite-preview
-# MAX_REPLY_CHARS=260
+GEMINI_API_KEY=your_gemini_key
+VCLIP_API_KEY=your_vclip_key
+VCLIP_VOICE_ID=your_voice_id
 ```
 
-### 3. Khởi chạy Development Server
+4. Run dev
 
 ```bash
 npm run dev
 ```
 
-Ứng dụng sẽ tự động mở tại: `http://127.0.0.1:8000`
+Ports:
+- `8000`: frontend (Vite)
+- `8001`: chat API
+- `8002`: tts API
 
-**Lệnh trên sẽ khởi chạy 3 server đồng thời:**
-- **8000** (Vite Frontend): Auto-reload khi sửa React components
-- **8001** (Chat API): Node.js - Gemini integration
-- **8002** (TTS API): Node.js - Vclip synthesis
-
-## 🎮 Cách sử dụng
-
-1. **Chọn nhân vật**: Dropdown "VRM Model" (trái)
-2. **Bấm animation**: 11 nút hành động (Angry, Blush, Clapping, v.v.)
-3. **Chat**: Nhập tin nhắn (phải) → Tổng tài sẽ trả lời + chạy animation + phát giọng
-
-## 🤖 Cấu hình AI Model
-
-Hệ thống hỗ trợ 3 model chính:
-- `gemini-3.1-flash-lite-preview` ⭐ (mặc định) - Nhanh & quota tốt
-- `gemini-3-flash-preview` - Chất lượng cao hơn
-- `gemma-3-27b-it` - Dự phòng (quota dồi dào)
-
-**Fallback tự động**: Nếu model chính gặp lỗi (quota, overload, v.v.), hệ thống tự chuyển sang model tiếp theo.
-
-## 🏗️ Build & Production
-
-### Build static files
+## Commands
 
 ```bash
+npm run dev        # run frontend + 2 backend APIs
+npm run dev:viewer # frontend only
+npm run dev:chatbot
+npm run dev:tts
 npm run build
 ```
 
-Output: `dist/` - sẵn sàng deploy.
+## Animation List
 
-## Triển khai công khai (Deploy lên Vercel)
+Current animation buttons:
 
-1. Push code lên GitHub
-2. Kết nối GitHub repo với [Vercel](https://vercel.com/)
-3. Vercel tự động detect:
-   - Vite build cho frontend
-   - `api/` folder → Serverless Functions
-4. Thêm Environment Variables trên Vercel dashboard:
-   - `GEMINI_API_KEY`
-   - `VCLIP_API_KEY`
-   - `VCLIP_VOICE_ID`
-5. Deploy & thưởng thức 🎉
+`Angry, Blush, Clapping, Dancing, Goodbye, Jump, LookAround, Relax, Sad, Sleepy, Surprised, Thinking, Show, Greeting, Peace, Shoot, Spin, Pose, Squat`
 
-## 📚 Stack Công nghệ
+## Deploy (Vercel)
 
-- **Frontend**: React 18, Vite 7, Three.js, @pixiv/three-vrm
-- **Backend APIs**: Node.js, Express, Google Generative AI, Vclip
-- **Styling**: Modern CSS (Glassmorphism, Gradients)
-- **Build**: Vite (bundler), Nodemon (hot-reload)
-- **Deployment**: Vercel Serverless, GitHub
+1. Push repo lên GitHub
+2. Import project vào Vercel
+3. Thêm env vars trên Vercel dashboard
+4. Deploy
 
-## 🎓 Học hỏi thêm
+## Notes
 
-- [Three.js Documentation](https://threejs.org/)
-- [Pixiv VRM Libraries](https://github.com/pixiv/three-vrm)
-- [Google Gemini API](https://ai.google.dev/)
-- [Vite Guide](https://vitejs.dev/)
-
-## ❤️ Credits
-
-- **VRMA Animations**: Tham khảo từ [tk256ailab/vrm-viewer](https://github.com/tk256ailab/vrm-viewer)
-- **3D Models**: VRM format by [VRoid Studio](https://vroid.com/)
-- **AI Engine**: [Google Gemini](https://gemini.google.com/)
-
-## 📄 License
-
-MIT - Sử dụng tự do cho mục đích cá nhân & thương mại
-
----
-
-**Hỏi? Gặp vấn đề?** Mở issue hoặc PR để cộng đồng giúp đỡ! 🚀
+- Nếu animation không highlight đúng nút: app hiện đã sync theo state trung tâm ở `App.jsx`.
+- Nếu gặp vấn đề cổng bận khi chạy dev: script `predev` đã tự kill `8000/8001/8002`.

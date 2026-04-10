@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { motion } from 'framer-motion';
+import { ChevronRight, X } from 'lucide-react';
 
 export function ControlsPanel({
     vrmModel,
@@ -6,14 +8,13 @@ export function ControlsPanel({
     animationNames,
     animations,
     onAnimationPlay,
+    activeAnimationIndex,
     status,
     isCollapsed,
     onToggle,
     backgroundType,
     onBackgroundTypeChange,
 }) {
-    const [activeAnimation, setActiveAnimation] = useState(null);
-
     const animationLabelMap = {
         'Show full body': 'Show',
         'Peace sign': 'Peace',
@@ -27,22 +28,44 @@ export function ControlsPanel({
             return;
         }
 
-        setActiveAnimation(index);
         onAnimationPlay?.(animation, index);
     };
 
     return (
         <>
-            <button
-                className={`edge-toggle-btn controls-toggle`}
-                onClick={onToggle}
-                title={isCollapsed ? 'Mở khung trái' : 'Ẩn khung trái'}
-                aria-label={isCollapsed ? 'Mở khung trái' : 'Ẩn khung trái'}
-            >
-                {isCollapsed ? '>' : '<'}
-            </button>
+            {isCollapsed && (
+                <motion.button
+                    className={`edge-toggle-btn controls-toggle`}
+                    onClick={onToggle}
+                    title="Mở khung trái"
+                    aria-label="Mở khung trái"
+                    whileHover={{ scale: 1.06, x: 1 }}
+                    whileTap={{ scale: 0.96 }}
+                >
+                    <ChevronRight size={18} strokeWidth={2.8} />
+                </motion.button>
+            )}
 
-            <div className={`controls ${isCollapsed ? 'is-collapsed' : ''}`}>
+            <motion.div
+                className={`controls ${isCollapsed ? 'is-collapsed' : ''}`}
+                initial={{ opacity: 0, x: -24, filter: 'blur(8px)' }}
+                animate={isCollapsed
+                    ? { opacity: 0, x: -520, filter: 'blur(4px)', transitionEnd: { visibility: 'hidden' } }
+                    : { opacity: 1, x: 0, filter: 'blur(0px)', visibility: 'visible' }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                style={{ pointerEvents: isCollapsed ? 'none' : 'auto' }}
+            >
+                {!isCollapsed && (
+                    <button
+                        className="card-close-btn"
+                        onClick={onToggle}
+                        title="Ẩn khung trái"
+                        aria-label="Ẩn khung trái"
+                    >
+                        <X size={14} strokeWidth={3} />
+                    </button>
+                )}
+
                 <div className="panel-header">
                     <span className="eyebrow">Tương Tác</span>
                     <div className="panel-title">Biểu Cảm & Hành Động</div>
@@ -78,7 +101,6 @@ export function ControlsPanel({
                                 fontSize: '12px',
                                 fontWeight: 600,
                                 transition: 'all 0.2s ease',
-                                boxShadow: backgroundType === 'video' ? '0 8px 20px rgba(30, 64, 175, 0.4)' : '0 2px 8px rgba(59, 130, 246, 0.08)',
                             }}
                         >
                             Video
@@ -96,7 +118,6 @@ export function ControlsPanel({
                                 fontSize: '12px',
                                 fontWeight: 600,
                                 transition: 'all 0.2s ease',
-                                boxShadow: backgroundType === 'hdr' ? '0 8px 20px rgba(30, 64, 175, 0.4)' : '0 2px 8px rgba(59, 130, 246, 0.08)',
                             }}
                         >
                             HDR
@@ -110,7 +131,7 @@ export function ControlsPanel({
                         {(animationNames || []).map((name, index) => (
                             <button
                                 key={name}
-                                className={`vrma-btn ${activeAnimation === index ? 'active' : ''}`}
+                                className={`vrma-btn ${activeAnimationIndex === index ? 'active' : ''}`}
                                 onClick={() => handleAnimationClick(index, animations?.[index])}
                                 disabled={!animations || !animations[index]}
                             >
@@ -122,13 +143,13 @@ export function ControlsPanel({
 
                 <div className="mouse-guide">
                     <div className="mouse-guide-title">Hướng dẫn điều khiển</div>
-                    <div className="mouse-guide-item">Chuột trái: xoay background</div>
+                    <div className="mouse-guide-item">Chuột trái: xoay background (chỉ hdr) và model</div>
                     <div className="mouse-guide-item">Chuột phải: di chuyển model</div>
-                    <div className="mouse-guide-item">Lăn chuột: thu phóng</div>
+                    <div className="mouse-guide-item">Lăn chuột: zoom</div>
                 </div>
 
                 <div className="status">{status}</div>
-            </div>
+            </motion.div>
         </>
     );
 }

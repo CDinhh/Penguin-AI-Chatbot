@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { ChevronLeft, RotateCcw, X } from 'lucide-react';
 
 export function ChatPanel({
     messages,
@@ -32,16 +34,39 @@ export function ChatPanel({
 
     return (
         <>
-            <button
-                className={`edge-toggle-btn chat-toggle`}
-                onClick={onToggle}
-                title={isCollapsed ? 'Mở khung chat' : 'Ẩn khung chat'}
-                aria-label={isCollapsed ? 'Mở khung chat' : 'Ẩn khung chat'}
-            >
-                {isCollapsed ? '<' : '>'}
-            </button>
+            {isCollapsed && (
+                <motion.button
+                    className={`edge-toggle-btn chat-toggle`}
+                    onClick={onToggle}
+                    title="Mở khung chat"
+                    aria-label="Mở khung chat"
+                    whileHover={{ scale: 1.06, x: -1 }}
+                    whileTap={{ scale: 0.96 }}
+                >
+                    <ChevronLeft size={18} strokeWidth={2.8} />
+                </motion.button>
+            )}
 
-            <div className={`chat-shell ${isCollapsed ? 'is-collapsed' : ''}`}>
+            <motion.div
+                className={`chat-shell ${isCollapsed ? 'is-collapsed' : ''}`}
+                initial={{ opacity: 0, x: 24, filter: 'blur(8px)' }}
+                animate={isCollapsed
+                    ? { opacity: 0, x: 520, filter: 'blur(4px)', transitionEnd: { visibility: 'hidden' } }
+                    : { opacity: 1, x: 0, filter: 'blur(0px)', visibility: 'visible' }}
+                transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: 0.06 }}
+                style={{ pointerEvents: isCollapsed ? 'none' : 'auto' }}
+            >
+                {!isCollapsed && (
+                    <button
+                        className="card-close-btn"
+                        onClick={onToggle}
+                        title="Ẩn khung chat"
+                        aria-label="Ẩn khung chat"
+                    >
+                        <X size={14} strokeWidth={3} />
+                    </button>
+                )}
+
                 <div className="panel-header">
                     <div className="panel-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ fontWeight: 800, color: '#1E40AF' }}>Tổng tài (Model Penguin)</span>
@@ -113,7 +138,7 @@ export function ChatPanel({
                         className="reload-btn"
                         title="Tự gọi lại Sếp"
                     >
-                        ↻
+                        <RotateCcw size={16} strokeWidth={2.4} />
                     </button>
                 </div>
 
@@ -162,7 +187,7 @@ export function ChatPanel({
                         </svg>
                     </button>
                 </form>
-            </div>
+            </motion.div>
         </>
     );
 }

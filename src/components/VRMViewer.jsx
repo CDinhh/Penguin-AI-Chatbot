@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -13,6 +14,7 @@ const VRMA_ANIMATION_URLS = [
     getUrl('VRMA/Angry.vrma'),
     getUrl('VRMA/Blush.vrma'),
     getUrl('VRMA/Clapping.vrma'),
+    getUrl('VRMA/Dancing.vrma'),
     getUrl('VRMA/Goodbye.vrma'),
     getUrl('VRMA/Jump.vrma'),
     getUrl('VRMA/LookAround.vrma'),
@@ -43,6 +45,7 @@ export function VRMViewer({
     selectedAnimation,
     backgroundType,
 }) {
+    const MIN_LOADING_OVERLAY_MS = 420;
     const containerRef = useRef(null);
     const rendererRef = useRef(null);
     const sceneRef = useRef(null);
@@ -54,7 +57,41 @@ export function VRMViewer({
     const loaderRef = useRef(null);
     const animationFrameRef = useRef(null);
     const clockRef = useRef(new THREE.Clock());
+    const loadingSinceRef = useRef(0);
+    const hideOverlayTimeoutRef = useRef(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isBackgroundLoading, setIsBackgroundLoading] = useState(false);
+    const [isOverlayVisible, setIsOverlayVisible] = useState(true);
+
+    useEffect(() => {
+        return () => {
+            if (hideOverlayTimeoutRef.current) {
+                clearTimeout(hideOverlayTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        const isBusy = isLoading || isBackgroundLoading;
+
+        if (isBusy) {
+            if (hideOverlayTimeoutRef.current) {
+                clearTimeout(hideOverlayTimeoutRef.current);
+                hideOverlayTimeoutRef.current = null;
+            }
+            loadingSinceRef.current = performance.now();
+            setIsOverlayVisible(true);
+            return;
+        }
+
+        const elapsed = performance.now() - loadingSinceRef.current;
+        const delay = Math.max(0, MIN_LOADING_OVERLAY_MS - elapsed);
+
+        hideOverlayTimeoutRef.current = setTimeout(() => {
+            setIsOverlayVisible(false);
+            hideOverlayTimeoutRef.current = null;
+        }, delay);
+    }, [isLoading, isBackgroundLoading]);
 
     useEffect(() => {
         if (!containerRef.current) return;
@@ -133,7 +170,6 @@ export function VRMViewer({
                     console.warn('Failed to load background:', error);
                     createGradientBackground(scene);
                 }
-                setIsLoading(false);
             };
 
             const createGradientBackground = (scn) => {
@@ -202,6 +238,7 @@ export function VRMViewer({
 
         (async () => {
             try {
+                setIsLoading(true);
                 onStatusChange?.('Loading VRM model...');
 
                 const modelUrl = getUrl(`VRM/${vrmModel}`);
@@ -265,8 +302,10 @@ export function VRMViewer({
                             onStatusChange?.(`Ready (${loadedCount}/${VRMA_ANIMATION_URLS.length} animations)`);
                         }
                         onAnimationsLoaded?.(animationData);
+                        setIsLoading(false);
                     } catch (error) {
                         console.warn('Failed to load animations:', error);
+                        setIsLoading(false);
                     }
                 })();
 
@@ -274,6 +313,7 @@ export function VRMViewer({
             } catch (error) {
                 console.error('Failed to load VRM:', error);
                 onStatusChange?.('Failed to load model');
+                setIsLoading(false);
             }
         })();
     }, [vrmModel, onStatusChange, onAnimationsLoaded]);
@@ -313,6 +353,7 @@ export function VRMViewer({
         if (!sceneRef.current || !rendererRef.current) return;
 
         (async () => {
+            setIsBackgroundLoading(true);
             try {
                 if (backgroundType === 'hdr') {
                     const rgbeLoader = new RGBELoader();
@@ -363,19 +404,43 @@ export function VRMViewer({
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 const texture = new THREE.CanvasTexture(canvas);
                 sceneRef.current.background = texture;
+            } finally {
+                setIsBackgroundLoading(false);
             }
         })();
     }, [backgroundType]);
 
     return (
         <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
-            {isLoading && (
-                <div id="loadingOverlay">
-                    <div className="loader-spinner"></div>
-                    <div className="loader-text">ĐANG CHUẨN BỊ DỮ LIỆU...</div>
-                    <div className="loader-subtext">Đang đốt hơn 100mb của bạn để tải model 3D và background 3D</div>
-                </div>
-            )}
+            <AnimatePresence>
+                {isOverlayVisible && (
+                    <motion.div
+                        id="loadingOverlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.22, ease: 'easeOut' }}
+                    >
+                        <div className="loader-spinner" />
+                        <motion.div
+                            className="loader-text"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.08, duration: 0.3 }}
+                        >
+                            ĐANG TẢI DỮ LIỆU
+                        </motion.div>
+                        <motion.div
+                            className="loader-subtext"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.16, duration: 0.3 }}
+                        >
+                            Đang đốt cỡ 100mb của bạn để tải
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
