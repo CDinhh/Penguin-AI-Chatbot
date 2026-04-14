@@ -5,6 +5,7 @@ import { ChatPanel } from './components/ChatPanel';
 import { SpeechBubble } from './components/SpeechBubble';
 import { useChatAPI } from './hooks/useChatAPI';
 import { useTTSAudio } from './hooks/useTTSAudio';
+import { Toaster, ToastBar, toast } from 'react-hot-toast';
 import './App.css';
 
 const ANIMATION_NAMES = [
@@ -48,6 +49,9 @@ export default function App() {
     const [backgroundType, setBackgroundType] = useState('video');
     const hasAutoPlayedOnEntryRef = useRef(false);
     const hadBlushAutoPlayOnModelChangeRef = useRef(false);
+    const shouldShowHdrToastRef = useRef(false);
+    const wasBackgroundLoadingRef = useRef(false);
+    const backgroundTypeRef = useRef(backgroundType);
 
     const { sendMessage, checkHealth, loading: chatLoading } = useChatAPI();
     const { speakText, speaking, updateLipSync } = useTTSAudio((value) => setMouthOpen(value));
@@ -74,6 +78,10 @@ export default function App() {
             cancelled = true;
         };
     }, [checkHealth]);
+
+    useEffect(() => {
+        backgroundTypeRef.current = backgroundType;
+    }, [backgroundType]);
 
     // Animation loop for lip sync
     useEffect(() => {
@@ -228,6 +236,29 @@ export default function App() {
         setStatus(`Now Playing: ${ANIMATION_NAMES[index] || animation.name || 'Animation'}`);
     }, []);
 
+    const handleBackgroundTypeChange = useCallback((nextBackgroundType) => {
+        setBackgroundType((prevBackgroundType) => {
+            if (nextBackgroundType === 'hdr' && prevBackgroundType !== 'hdr') {
+                shouldShowHdrToastRef.current = true;
+            } else if (nextBackgroundType !== 'hdr') {
+                shouldShowHdrToastRef.current = false;
+            }
+
+            return nextBackgroundType;
+        });
+    }, []);
+
+    const handleBackgroundLoadingChange = useCallback((isLoading) => {
+        const wasLoading = wasBackgroundLoadingRef.current;
+
+        if (wasLoading && !isLoading && backgroundTypeRef.current === 'hdr' && shouldShowHdrToastRef.current) {
+            toast('Giữ chuột trái + di chuyển để xoay background 3D');
+            shouldShowHdrToastRef.current = false;
+        }
+
+        wasBackgroundLoadingRef.current = isLoading;
+    }, []);
+
     return (
         <div className="app-container">
             <VRMViewer
@@ -237,6 +268,7 @@ export default function App() {
                 mouthOpen={mouthOpen}
                 selectedAnimation={selectedAnimation}
                 backgroundType={backgroundType}
+                onBackgroundLoadingChange={handleBackgroundLoadingChange}
             />
 
             <SpeechBubble text={speechBubbleText} isThinking={isThinking} />
@@ -252,7 +284,7 @@ export default function App() {
                 isCollapsed={controlsCollapsed}
                 onToggle={() => setControlsCollapsed(!controlsCollapsed)}
                 backgroundType={backgroundType}
-                onBackgroundTypeChange={setBackgroundType}
+                onBackgroundTypeChange={handleBackgroundTypeChange}
             />
 
             <ChatPanel
@@ -268,6 +300,30 @@ export default function App() {
                 onToggle={() => setChatCollapsed(!chatCollapsed)}
                 onManualReload={handleManualReload}
             />
+
+            <Toaster
+                position="top-center"
+                toastOptions={{
+                    duration: 2800,
+                    className: 'hdr-guide-toast',
+                    style: {
+                        whiteSpace: 'nowrap',
+                        maxWidth: 'none',
+                    },
+                }}
+            >
+                {(t) => (
+                    <ToastBar
+                        toast={t}
+                        style={{
+                            ...t.style,
+                            animation: t.visible
+                                ? 'hdrToastPopIn 0.33s cubic-bezier(0.22, 1, 0.36, 1) forwards'
+                                : 'hdrToastPopOut 0.2s ease-in forwards',
+                        }}
+                    />
+                )}
+            </Toaster>
         </div>
     );
 }

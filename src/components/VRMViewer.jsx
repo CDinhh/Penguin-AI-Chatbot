@@ -44,6 +44,7 @@ export function VRMViewer({
     mouthOpen,
     selectedAnimation,
     backgroundType,
+    onBackgroundLoadingChange,
 }) {
     const MIN_LOADING_OVERLAY_MS = 420;
     const containerRef = useRef(null);
@@ -92,6 +93,10 @@ export function VRMViewer({
             hideOverlayTimeoutRef.current = null;
         }, delay);
     }, [isLoading, isBackgroundLoading]);
+
+    useEffect(() => {
+        onBackgroundLoadingChange?.(isBackgroundLoading);
+    }, [isBackgroundLoading, onBackgroundLoadingChange]);
 
     useEffect(() => {
         if (!containerRef.current) return;
