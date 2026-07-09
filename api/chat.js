@@ -43,18 +43,14 @@ MỤC TIÊU:
 Vừa hỗ trợ giải đáp chính xác, vừa đóng vai một người đàn ông lý tưởng, che chở cho "bảo bối" của mình trong mọi hoàn cảnh.
 `.trim();
 
-const MODEL_NAME = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite-preview';
+const MODEL_NAME = process.env.GEMINI_MODEL || 'gemma-4-31b-it';
 const MAX_REPLY_CHARS = Number(process.env.MAX_REPLY_CHARS || 260);
 const BASE_SUPPORTED_MODELS = [
-  'gemini-3.1-flash-lite-preview',
-  'gemini-3-flash-preview',
-  'gemma-3-27b-it',
+  'gemma-4-31b-it',
 ];
 const SUPPORTED_MODELS = Array.from(new Set([MODEL_NAME, ...BASE_SUPPORTED_MODELS]));
 const MODEL_FALLBACK_ORDER = [
-  'gemini-3.1-flash-lite-preview',
-  'gemini-3-flash-preview',
-  'gemma-3-27b-it',
+  'gemma-4-31b-it',
 ];
 
 const resolveModelName = (requestedModel) => {

@@ -33,7 +33,7 @@ const ANIMATION_NAMES = [
 export default function App() {
     const [vrmModel, setVrmModel] = useState('penguin.vrm');
     const [messages, setMessages] = useState([]);
-    const [selectedModel, setSelectedModel] = useState('gemini-3.1-flash-lite-preview');
+    const [selectedModel, setSelectedModel] = useState('gemma-4-31b-it');
     const [customApiKey, setCustomApiKey] = useState('');
     const [status, setStatus] = useState('Đang chuẩn bị...');
     const [assistantState, setAssistantState] = useState('Đang đánh thức Tổng tài...');

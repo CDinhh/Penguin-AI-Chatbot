@@ -91,9 +91,7 @@ export function ChatPanel({
                                 onChange={(e) => onModelChange?.(e.target.value)}
                             >
                                 <optgroup label="Khuyên dùng">
-                                    <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash Lite Preview (mặc định)</option>
-                                    <option value="gemini-3-flash-preview">Gemini 3 Flash Preview</option>
-                                    <option value="gemma-3-27b-it">Gemma 3 27B IT (dự phòng quota cao)</option>
+                                    <option value="gemma-4-31b-it">Gemma 4 31B IT (mặc định)</option>
                                 </optgroup>
                             </select>
                             <span style={{ fontSize: '11px', color: '#6b7280', whiteSpace: 'nowrap', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Google AI Studio Key:</span>
